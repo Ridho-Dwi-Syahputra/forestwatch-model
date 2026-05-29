@@ -37,7 +37,7 @@ label_fusion:
 export:
   tiles_nx: 6                # grid kolom
   tiles_ny: 6                # grid baris (total 36 ubin)
-  max_pixels: 1.0e13
+  max_pixels: 10000000000000
   file_format: "GeoTIFF"
 
 # Patch extraction

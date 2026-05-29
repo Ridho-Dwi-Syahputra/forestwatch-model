@@ -47,7 +47,7 @@ def export_stack(
         folder=folder,
         region=region,
         scale=scale,
-        maxPixels=max_pixels,
+        maxPixels=int(float(max_pixels)),
         fileFormat=file_format,
     )
     if start:
