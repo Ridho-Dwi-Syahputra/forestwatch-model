@@ -130,7 +130,7 @@ GEE_ASSETS: dict[str, str] = {
     "sentinel2": "COPERNICUS/S2_SR_HARMONIZED",
     "esa_worldcover": "ESA/WorldCover/v200/2021",
     "dynamic_world": "GOOGLE/DYNAMICWORLD/V1",
-    "hansen_gfc": "UMD/hansen/global_forest_change_2024_v1_12",
+    "hansen_gfc": "UMD/hansen/global_forest_change_2025_v1_13",
     "biopama_oilpalm": "BIOPAMA/GlobalOilPalm/v1",
 }
 
