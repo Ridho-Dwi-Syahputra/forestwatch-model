@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "name": "papua_bbox",
+  "crs": { "type": "name", "properties": { "name": "EPSG:4326" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Papua bounding box (6 provinsi)",
+        "source": "PRD v2.0 §A.5 Cell 3"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [130.0, -9.5],
+          [141.2, -9.5],
+          [141.2, 0.5],
+          [130.0, 0.5],
+          [130.0, -9.5]
+        ]]
+      }
+    }
+  ]
+}
