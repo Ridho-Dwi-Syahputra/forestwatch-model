@@ -43,7 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--n-polygons", "-n", type=int, default=60, help="Jumlah polygon deforestasi.")
     p.add_argument("--seed", "-s", type=int, default=42, help="Random seed.")
     p.add_argument("--period-from", type=int, default=2021)
-    p.add_argument("--period-to", type=int, default=2024)
+    p.add_argument("--period-to", type=int, default=2025)
     p.add_argument(
         "--png-size", type=int, default=512, help="Sisi PNG mock landcover (default 512×512)."
     )

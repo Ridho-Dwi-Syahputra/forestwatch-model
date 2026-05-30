@@ -140,8 +140,8 @@ GEE_ASSETS: dict[str, str] = {
 OUTPUT_FILES: dict[str, str] = {
     "landcover_t1_png": "landcover_2021.png",
     "landcover_t1_bounds": "landcover_2021_bounds.json",
-    "landcover_t2_png": "landcover_2024.png",
-    "landcover_t2_bounds": "landcover_2024_bounds.json",
+    "landcover_t2_png": "landcover_2025.png",
+    "landcover_t2_bounds": "landcover_2025_bounds.json",
     "deforestation_geojson": "deforestation.geojson",
     "statistics_json": "statistics.json",
     "legend_json": "legend.json",

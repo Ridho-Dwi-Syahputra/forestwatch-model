@@ -19,7 +19,7 @@ def render_model_card(
     patch_size: int = 256,
     n_parameters: int | None = None,
     training_dataset: str = "Sentinel-2 SR Harmonized + ESA WorldCover + Dynamic World + Hansen GFC + BIOPAMA Oil Palm",
-    training_period: str = "Citra: 2024 (untuk training); pembanding: 2021",
+    training_period: str = "Citra: 2025 (untuk training); pembanding: 2021",
     area: str = "Papua, Indonesia (6 provinsi, bbox 130°–141,2°E, -9,5°–0,5°N)",
     metrics: dict[str, Any] | None = None,
     epochs: int | None = None,

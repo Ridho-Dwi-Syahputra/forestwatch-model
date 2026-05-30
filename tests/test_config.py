@@ -19,7 +19,7 @@ def test_default_config_loads():
     assert isinstance(cfg, Config)
     assert cfg["project"]["name"] == "ForestWatch Papua"
     assert cfg["periods"]["t1"] == 2021
-    assert cfg["periods"]["t2"] == 2024
+    assert cfg["periods"]["t2"] == 2025
 
 
 def test_dot_access():

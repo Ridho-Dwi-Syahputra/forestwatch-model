@@ -34,7 +34,7 @@ def detect_transitions_from_arrays(
     transitions: dict[int, str] | None = None,
     min_area_ha: float = 0.5,
     period_from: int = 2021,
-    period_to: int = 2024,
+    period_to: int = 2025,
     province: str | None = None,
     id_offset: int = 0,
 ) -> list[dict[str, Any]]:
@@ -110,7 +110,7 @@ def detect_transitions(
     transitions: dict[int, str] | None = None,
     min_area_ha: float = 0.5,
     period_from: int = 2021,
-    period_to: int = 2024,
+    period_to: int = 2025,
 ) -> dict[str, Any]:
     """Iterasi semua ubin T1 ↔ T2, hasilkan GeoJSON deteksi perubahan.
 

@@ -141,8 +141,8 @@ def test_validate_dummy_files_match_required(tmp_path):
     required = {
         "landcover_2021.png",
         "landcover_2021_bounds.json",
-        "landcover_2024.png",
-        "landcover_2024_bounds.json",
+        "landcover_2025.png",
+        "landcover_2025_bounds.json",
         "deforestation.geojson",
         "statistics.json",
         "legend.json",

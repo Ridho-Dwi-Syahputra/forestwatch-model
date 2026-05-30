@@ -29,7 +29,7 @@ def generate_all_outputs(
     mask_dir: str | os.PathLike[str],
     out_dir: str | os.PathLike[str],
     period_from: int = 2021,
-    period_to: int = 2024,
+    period_to: int = 2025,
     metrics: dict[str, Any] | None = None,
     model_card_kwargs: dict[str, Any] | None = None,
     mask_t1_prefix: str = "mask_t1_",
@@ -40,7 +40,7 @@ def generate_all_outputs(
     """Generate 7 file kontrak (PRD §B.1) ke ``out_dir``.
 
     Workflow:
-      1. Mosaic mask T2 → ``landcover_2024.png`` + bounds
+      1. Mosaic mask T2 → ``landcover_2025.png`` + bounds
       2. Mosaic mask T1 → ``landcover_2021.png`` + bounds
       3. Deteksi 4 transisi → ``deforestation.geojson``
       4. Hitung per_class_area_ha dari T2
@@ -153,7 +153,7 @@ def generate_outputs_from_geojson(
     deforestation_geojson_path: str | os.PathLike[str],
     out_dir: str | os.PathLike[str],
     period_from: int = 2021,
-    period_to: int = 2024,
+    period_to: int = 2025,
     per_class_area_ha: dict[str, float] | None = None,
     metrics: dict[str, Any] | None = None,
     model_card_kwargs: dict[str, Any] | None = None,
