@@ -84,6 +84,67 @@ def overall_accuracy(cm: "np.ndarray", *, eps: float = 1e-9) -> float:
     return float(np.diag(cm).sum()) / total
 
 
+def cohen_kappa(cm: "np.ndarray", *, eps: float = 1e-9) -> float:
+    """Cohen's Kappa dari confusion matrix.
+
+    κ = (p_o - p_e) / (1 - p_e), dengan p_o = observed agreement (= OA),
+    p_e = expected agreement by chance. Metrik standar accuracy assessment
+    di remote sensing (mengoreksi kesepakatan akibat kebetulan).
+
+    Interpretasi umum: >0.80 sangat baik, 0.60-0.80 baik, 0.40-0.60 sedang.
+    """
+    import numpy as np  # noqa: PLC0415
+
+    cm = np.asarray(cm, dtype=np.float64)
+    n = cm.sum()
+    if n < eps:
+        return 0.0
+    p_o = np.diag(cm).sum() / n
+    p_e = (cm.sum(axis=0) * cm.sum(axis=1)).sum() / (n * n)
+    denom = 1.0 - p_e
+    if abs(denom) < eps:
+        return 0.0
+    return float((p_o - p_e) / denom)
+
+
+def median_frequency_weights(
+    distribution: "dict[int, int]",
+    *,
+    n_classes: int = 6,
+    clip_min: float = 0.3,
+    clip_max: float = 5.0,
+    eps: float = 1e-9,
+) -> list[float]:
+    """Bobot kelas median-frequency balancing (Eigen & Fergus, 2015).
+
+    weight(c) = median(freq) / freq(c), dengan freq(c) = count(c) / total.
+    Kelas langka dapat bobot besar, kelas dominan (Hutan) dapat bobot kecil.
+    Hasil di-clip ke [clip_min, clip_max] agar training stabil.
+
+    Args:
+        distribution: Dict ``{class_id: pixel_count}`` dari
+            ``data.patches.compute_class_distribution``.
+        n_classes: Jumlah kelas.
+        clip_min, clip_max: Batas bobot.
+
+    Returns:
+        List bobot panjang ``n_classes`` (urut class_id 0..n-1).
+    """
+    import numpy as np  # noqa: PLC0415
+
+    counts = np.array([float(distribution.get(c, 0)) for c in range(n_classes)])
+    total = counts.sum()
+    if total < eps:
+        return [1.0] * n_classes
+    freqs = counts / total
+    # Median hanya dari kelas yang hadir (freq > 0)
+    present = freqs[freqs > 0]
+    med = float(np.median(present)) if present.size else 1.0
+    weights = np.where(freqs > 0, med / (freqs + eps), clip_max)
+    weights = np.clip(weights, clip_min, clip_max)
+    return [round(float(w), 3) for w in weights]
+
+
 def metric_summary(
     cm: "np.ndarray",
     *,
@@ -93,6 +154,7 @@ def metric_summary(
     iou = compute_iou_per_class(cm)
     f1 = compute_f1_per_class(cm)
     oa = overall_accuracy(cm)
+    kappa = cohen_kappa(cm)
     if class_names is None:
         class_names = tuple(f"class_{i}" for i in range(len(iou)))
     per_class = [
@@ -102,6 +164,7 @@ def metric_summary(
     return {
         "overall_accuracy": float(oa),
         "mean_iou": float(iou.mean()),
+        "kappa": float(kappa),
         "per_class": per_class,
         "confusion_matrix": cm.tolist(),
     }

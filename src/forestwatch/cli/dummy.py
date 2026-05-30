@@ -96,9 +96,13 @@ def main(argv: list[str] | None = None) -> int:
     per_class_area_ha = _per_class_area_from_mask(mask_t2, pixel_area_ha)
 
     # ---- 5. Dummy model metrics (realistic per Master Plan target) ----
+    from forestwatch.training.metrics import cohen_kappa  # noqa: PLC0415
+
+    _cm = _dummy_confusion_matrix(rng)
     dummy_metrics = {
         "overall_accuracy": 0.86,
         "mean_iou": 0.71,
+        "kappa": round(cohen_kappa(np.array(_cm)), 4),
         "per_class": [
             {"class": "Perairan", "iou": 0.91, "f1": 0.95},
             {"class": "Hutan", "iou": 0.94, "f1": 0.97},
@@ -107,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
             {"class": "Lahan Terbakar", "iou": 0.55, "f1": 0.71},
         ],
-        "confusion_matrix": _dummy_confusion_matrix(rng),
+        "confusion_matrix": _cm,
     }
 
     # ---- 6. Statistics ----

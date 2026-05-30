@@ -75,13 +75,24 @@ class PapuaDataset:
             ) from e
 
         p = p or {}
-        return A.Compose(
-            [
-                A.HorizontalFlip(p=p.get("horizontal_flip_p", 0.5)),
-                A.VerticalFlip(p=p.get("vertical_flip_p", 0.5)),
-                A.RandomRotate90(p=p.get("rotate_90_p", 0.5)),
-            ]
-        )
+        transforms = [
+            A.HorizontalFlip(p=p.get("horizontal_flip_p", 0.5)),
+            A.VerticalFlip(p=p.get("vertical_flip_p", 0.5)),
+            A.RandomRotate90(p=p.get("rotate_90_p", 0.5)),
+        ]
+        # Augmentasi radiometrik RINGAN (limit kecil) agar tanda tangan spektral
+        # (SWIR pembeda sawit) tidak terdistorsi. Hanya brightness/contrast,
+        # tanpa gamma/hue. Default p=0.3.
+        bc_p = p.get("brightness_contrast_p", 0.3)
+        if bc_p and bc_p > 0:
+            transforms.append(
+                A.RandomBrightnessContrast(
+                    brightness_limit=p.get("brightness_limit", 0.1),
+                    contrast_limit=p.get("contrast_limit", 0.1),
+                    p=bc_p,
+                )
+            )
+        return A.Compose(transforms)
 
 
 def split_files(

@@ -66,14 +66,25 @@ training:
   learning_rate: 1.0e-3
   weight_decay: 1.0e-4
   scheduler: "cosine"
+  warmup_epochs: 3           # linear warmup sebelum cosine (0 = nonaktif)
   amp: true                  # automatic mixed precision
   loss:
+    # type: focal_tversky | ce_dice | ce_dice_lovasz | tversky | focal | lovasz
+    type: "focal_tversky"    # default berbasis literatur class-imbalance
+    tversky_alpha: 0.3       # penalti false-positive
+    tversky_beta: 0.7        # penalti false-negative (>alpha → recall kelas minoritas naik)
+    focal_gamma: 2.0
+    # Backward-compat (dipakai hanya jika type='ce_dice'):
     ce_weight: 0.6
     dice_weight: 0.4
+  use_class_weights: true    # true = hitung median-frequency dari distribusi nyata
   augmentation:
     horizontal_flip_p: 0.5
     vertical_flip_p: 0.5
     rotate_90_p: 0.5
+    brightness_contrast_p: 0.3   # radiometrik ringan
+    brightness_limit: 0.1
+    contrast_limit: 0.1
   split:
     train_ratio: 0.8
     val_ratio: 0.1
@@ -82,7 +93,8 @@ training:
 # Inference
 inference:
   patch_size: 256
-  stride: 256                # 256 = non-overlapping; turunkan untuk overlap blend
+  stride: 128                # < patch_size = overlap-blending (hilangkan seam)
+  tta: true                  # test-time augmentation (rata-rata 4 flip/rotasi)
 
 # Change detection
 change_detection:

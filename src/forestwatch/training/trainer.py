@@ -34,6 +34,7 @@ class TrainConfig:
     seed: int = 42
     n_classes: int = N_CLASSES
     ckpt_path: str = "outputs/best_model.pt"
+    warmup_epochs: int = 3  # linear warmup sebelum cosine (0 = nonaktif)
     log_every: int = 1  # log every N batches in train loop (untuk debug)
     history: list[dict[str, float]] = field(default_factory=list)
 
@@ -83,7 +84,21 @@ def train(
             model.parameters(), lr=cfg.learning_rate, weight_decay=cfg.weight_decay
         )
     if scheduler is None:
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.epochs)
+        warmup = int(getattr(cfg, "warmup_epochs", 0) or 0)
+        if warmup > 0 and warmup < cfg.epochs:
+            # Linear warmup (lr naik dari 10% → 100%) lalu cosine annealing.
+            warmup_sched = torch.optim.lr_scheduler.LinearLR(
+                optimizer, start_factor=0.1, total_iters=warmup
+            )
+            cosine_sched = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=cfg.epochs - warmup
+            )
+            scheduler = torch.optim.lr_scheduler.SequentialLR(
+                optimizer, schedulers=[warmup_sched, cosine_sched], milestones=[warmup]
+            )
+            _logger.info("Scheduler: LinearLR warmup %d ep -> CosineAnnealingLR.", warmup)
+        else:
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg.epochs)
 
     iou_metric = MulticlassJaccardIndex(num_classes=cfg.n_classes, average="macro").to(device_t)
 

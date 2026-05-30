@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from forestwatch.training.metrics import (
+    cohen_kappa,
     compute_confusion_matrix,
     compute_f1_per_class,
     compute_iou_per_class,
+    median_frequency_weights,
     metric_summary,
     overall_accuracy,
     set_seed,
@@ -89,3 +92,65 @@ def test_handles_out_of_range_target():
     cm = compute_confusion_matrix(pred, target, n_classes=2)
     # Hanya 2 piksel valid yang dihitung
     assert cm.sum() == 2
+
+
+# ============================================================================
+# Cohen's Kappa
+# ============================================================================
+
+
+def test_kappa_perfect_is_one():
+    target = np.array([0, 1, 2, 0, 1, 2])
+    cm = compute_confusion_matrix(target, target, n_classes=3)
+    assert cohen_kappa(cm) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_kappa_in_summary():
+    target = np.array([0, 1, 2, 0, 1])
+    cm = compute_confusion_matrix(target, target, n_classes=3)
+    summary = metric_summary(cm, class_names=("A", "B", "C"))
+    assert "kappa" in summary
+    assert summary["kappa"] == pytest.approx(1.0, abs=1e-6)
+
+
+def test_kappa_chance_level_near_zero():
+    """Prediksi acak terhadap distribusi sama → kappa mendekati 0."""
+    rng = np.random.default_rng(0)
+    target = rng.integers(0, 3, size=3000)
+    pred = rng.integers(0, 3, size=3000)
+    cm = compute_confusion_matrix(pred, target, n_classes=3)
+    assert abs(cohen_kappa(cm)) < 0.1
+
+
+def test_kappa_empty_matrix():
+    cm = np.zeros((3, 3))
+    assert cohen_kappa(cm) == 0.0
+
+
+# ============================================================================
+# Median-frequency class weights
+# ============================================================================
+
+
+def test_median_freq_weights_length():
+    dist = {0: 100, 1: 5000, 2: 200, 3: 180, 4: 350, 5: 60}
+    w = median_frequency_weights(dist, n_classes=6)
+    assert len(w) == 6
+
+
+def test_median_freq_rare_class_higher_weight():
+    # Kelas 1 dominan, kelas 5 langka → bobot 5 > bobot 1
+    dist = {0: 100, 1: 5000, 2: 200, 3: 180, 4: 350, 5: 60}
+    w = median_frequency_weights(dist, n_classes=6, clip_min=0.1, clip_max=10.0)
+    assert w[5] > w[1]
+
+
+def test_median_freq_clipping():
+    dist = {0: 1, 1: 1_000_000, 2: 1, 3: 1, 4: 1, 5: 1}
+    w = median_frequency_weights(dist, n_classes=6, clip_min=0.3, clip_max=5.0)
+    assert all(0.3 <= x <= 5.0 for x in w)
+
+
+def test_median_freq_empty_distribution():
+    w = median_frequency_weights({}, n_classes=6)
+    assert w == [1.0] * 6
