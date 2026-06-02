@@ -28,6 +28,11 @@ outputs/*
 *.onnx
 *.h5
 
+# Notebook archive lama (backup lokal, jangan commit — berisi output base64 lama)
+notebooks/*_v1_archive.ipynb
+notebooks/_tmp_*/
+notebooks/_build_nb.py
+
 # Local environment
 .env
 .env.local

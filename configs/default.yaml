@@ -26,12 +26,15 @@ sentinel2:
   scl_mask_classes: [3, 8, 9, 10, 11]  # bayangan, awan, salju → buang
   reflectance_divisor: 10000
 
-# Label fusion (PRD §A.4 revisi: kelas 5 = Tambang) — ambang batas
+# Label fusion (revisi besar: Dynamic World sebagai PETA DASAR + overlay tematik)
 label_fusion:
-  hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19)
+  dw_base: true              # Dynamic World (remap 9->6) jadi peta dasar
+  esa_forest_union: false    # true = perkuat Hutan dgn ESA (UNION, hanya menambah)
+  hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19) -> Deforestasi
   hansen_erosion_pixels: 1   # morphological erosion radius
-  default_class_id: 4        # inisialisasi: Pertanian Lain
+  palm_prob_threshold: 0.5   # FDP Palm Probability >= ambang -> Sawit (kelas 3)
   # Kelas 5 Tambang dari poligon Global Mining Footprint (Tang & Werner 2023)
+  # Sawit dari FDP Palm Probability model 2025a (ganti BIOPAMA 2019)
 
 # Ekspor ubin GEE
 export:

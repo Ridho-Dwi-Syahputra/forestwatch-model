@@ -132,10 +132,33 @@ GEE_ASSETS: dict[str, str] = {
     "esa_worldcover": "ESA/WorldCover/v200/2021",
     "dynamic_world": "GOOGLE/DYNAMICWORLD/V1",
     "hansen_gfc": "UMD/hansen/global_forest_change_2025_v1_13",
-    "biopama_oilpalm": "BIOPAMA/GlobalOilPalm/v1",
+    # Sawit: Forest Data Partnership Palm Probability model 2025a (ImageCollection,
+    # band 'probability' 0..1, 10 m, mencakup Indonesia/Papua, selaras T2=2025).
+    # Menggantikan BIOPAMA/GlobalOilPalm/v1 yang hanya snapshot 2019.
+    "fdp_palm": "projects/forestdatapartnership/assets/palm/model_2025a",
+    "biopama_oilpalm": "BIOPAMA/GlobalOilPalm/v1",  # legacy 2019 (referensi/cross-check)
     # Tang & Werner (2023) Global Mining Footprint — FeatureCollection poligon
     # tambang (pit, tailing, dll), didelineasi dari Sentinel-2. CC BY-4.0.
     "mining": "projects/sat-io/open-datasets/global-mining/global_mining_footprints",
+}
+
+# ============================================================================
+# REMAP DYNAMIC WORLD (9 kelas) → 6 KELAS PROYEK (peta dasar label fusion)
+# ============================================================================
+# DW 'label' band: 0 Water, 1 Trees, 2 Grass, 3 Flooded Veg, 4 Crops,
+# 5 Shrub/Scrub, 6 Built, 7 Bare, 8 Snow/Ice (Brown dkk. 2022).
+# DW dipakai sebagai PETA DASAR yang lengkap (tanpa default 'Pertanian Lain'),
+# lalu di-overlay tematik (Hansen→2, Mining→5, Sawit→3). Lihat label_fusion.py.
+DW_TO_CLASS: dict[int, int] = {
+    0: 0,  # Water           → Perairan
+    1: 1,  # Trees           → Hutan
+    2: 4,  # Grass           → Pertanian Lain (vegetasi non-hutan)
+    3: 0,  # Flooded Veg     → Perairan (rawa/wetland)
+    4: 4,  # Crops           → Pertanian Lain
+    5: 4,  # Shrub/Scrub     → Pertanian Lain (vegetasi non-hutan)
+    6: 2,  # Built           → Deforestasi/Lahan Terbuka (non-vegetasi)
+    7: 2,  # Bare            → Deforestasi/Lahan Terbuka
+    8: 2,  # Snow/Ice        → Deforestasi/Lahan Terbuka (Puncak Jaya, sangat kecil)
 }
 
 # ============================================================================
