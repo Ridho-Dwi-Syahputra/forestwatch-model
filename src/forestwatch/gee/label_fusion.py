@@ -68,8 +68,15 @@ def build_label(
     defo_mask = lossyear.gte(hansen_loss_year_min)
     defo_eroded = defo_mask.focal_min(radius=hansen_erosion_pixels, units="pixels")
 
-    oilpalm = ee.ImageCollection(GEE_ASSETS["biopama_oilpalm"]).first().select("classification")
-    is_oilpalm = oilpalm.eq(1).Or(oilpalm.eq(2))  # industrial OR smallholder
+    # BIOPAMA adalah ImageCollection ubin regional — WAJIB mosaic se-region,
+    # JANGAN .first() (itu hanya 1 ubin, kemungkinan di luar Papua → Sawit=0).
+    oilpalm = (
+        ee.ImageCollection(GEE_ASSETS["biopama_oilpalm"])
+        .filterBounds(region)
+        .mosaic()
+        .select("classification")
+    )
+    is_oilpalm = oilpalm.eq(1).Or(oilpalm.eq(2)).unmask(0)  # industrial OR smallholder
 
     dnbr = compute_dnbr(label_year, region)
     is_burned = dnbr.gte(dnbr_threshold)
@@ -91,16 +98,22 @@ def build_label(
     is_bare = esa.eq(60).Or(dw.eq(7))
     label = label.where(is_bare, 2)
 
-    # Aturan 5a & 5b: Cropland → Sawit / Pertanian Lain
+    # Aturan 5b: Cropland (non-sawit) → Pertanian Lain (eksplisit)
     is_cropland = esa.eq(40)
-    label = label.where(is_cropland.And(is_oilpalm), 3)
-    label = label.where(is_cropland.And(is_oilpalm.Not()), 4)
+    label = label.where(is_cropland, 4)
 
     # Aturan 6: Deforestasi (Hansen, MENIMPA)
     label = label.where(defo_eroded, 2)
 
     # Aturan 7: Lahan Terbakar (dNBR, MENIMPA)
     label = label.where(is_burned, 5)
+
+    # Aturan 5a (DITERAPKAN TERAKHIR): Sawit langsung dari BIOPAMA.
+    # BIOPAMA adalah peta sawit terdedikasi & tervalidasi (Descals dkk. 2021);
+    # diterapkan paling akhir agar kelas Sawit pasti terwakili — menimpa Hutan/
+    # Cropland yang sebenarnya perkebunan sawit (ESA sering melabeli sawit dewasa
+    # sebagai 'tree cover', sehingga penggerbangan cropland membuat Sawit hilang).
+    label = label.where(is_oilpalm, 3)
 
     return label.toByte().clip(region)
 
@@ -150,11 +163,12 @@ def apply_label_fusion_numpy(
     label[is_bare] = 2
 
     is_cropland = esa == 40
-    label[is_cropland & is_oilpalm_b] = 3
-    label[is_cropland & ~is_oilpalm_b] = 4
+    label[is_cropland] = 4               # cropland → Pertanian Lain (default sawit ditangani terakhir)
 
-    label[hansen_b] = 2  # MENIMPA
+    label[hansen_b] = 2                  # MENIMPA: Deforestasi
 
-    label[burned_b] = 5  # MENIMPA
+    label[burned_b] = 5                  # MENIMPA: Lahan Terbakar
+
+    label[is_oilpalm_b] = 3              # TERAKHIR: Sawit dari BIOPAMA (pasti terwakili)
 
     return label

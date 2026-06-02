@@ -142,11 +142,15 @@ def test_rule_burned_overrides_everything():
 
 
 def test_rule_order_matters():
-    """Aturan 6 (Hansen) menimpa aturan 5a (Sawit). Aturan 7 (Burned) menimpa semua."""
+    """Sawit (BIOPAMA) diterapkan TERAKHIR → menimpa Hansen & Burned.
+
+    Urutan baru: cropland→4, Hansen→2, Burned→5, lalu Sawit→3 (final).
+    Memastikan kelas Sawit pasti terwakili (tidak terhapus aturan lain).
+    """
     shape = (1, 4)
     esa = np.full(shape, 40, dtype=np.uint8)  # cropland
     dw = np.full(shape, 4, dtype=np.uint8)
-    is_oilpalm = np.full(shape, True)
+    is_oilpalm = np.full(shape, True)         # semua piksel = sawit (BIOPAMA)
     hansen = np.array([[1, 0, 1, 0]], dtype=np.uint8)
     burned = np.array([[0, 0, 1, 1]], dtype=np.uint8)
     label = apply_label_fusion_numpy(
@@ -155,9 +159,6 @@ def test_rule_order_matters():
         is_oilpalm=is_oilpalm,
         is_burned=burned,
     )
-    # piksel 0: cropland+sawit -> 3, lalu Hansen -> 2
-    # piksel 1: cropland+sawit -> 3
-    # piksel 2: cropland+sawit -> 3, Hansen -> 2, Burned -> 5
-    # piksel 3: cropland+sawit -> 3, Burned -> 5
-    expected = np.array([[2, 3, 5, 5]], dtype=np.uint8)
+    # is_oilpalm True di semua piksel & diterapkan terakhir → semua jadi Sawit (3)
+    expected = np.array([[3, 3, 3, 3]], dtype=np.uint8)
     np.testing.assert_array_equal(label, expected)
