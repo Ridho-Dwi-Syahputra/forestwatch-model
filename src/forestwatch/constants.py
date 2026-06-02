@@ -19,7 +19,7 @@ CLASS_NAMES: tuple[str, ...] = (
     "Deforestasi",
     "Sawit",
     "Pertanian Lain",
-    "Lahan Terbakar",
+    "Tambang",
 )
 
 CLASS_NAMES_EN: tuple[str, ...] = (
@@ -28,7 +28,7 @@ CLASS_NAMES_EN: tuple[str, ...] = (
     "Deforestation/Bare",
     "Oil Palm",
     "Other Agriculture",
-    "Burned",
+    "Mining",
 )
 
 # Palette warna untuk render PNG (PRD §A.5 Cell 10)
@@ -38,7 +38,7 @@ PALETTE_RGB: dict[int, tuple[int, int, int]] = {
     2: (224, 59, 36),    # Deforestasi    — merah
     3: (249, 115, 22),   # Sawit          — oranye
     4: (233, 196, 106),  # Pertanian Lain — kuning
-    5: (109, 76, 65),    # Lahan Terbakar — coklat
+    5: (142, 36, 170),   # Tambang        — ungu
 }
 
 # Hex colors untuk legend.json (PRD §B.1.3)
@@ -48,11 +48,12 @@ CLASS_COLORS: dict[int, str] = {
     2: "#E03B24",
     3: "#F97316",
     4: "#E9C46A",
-    5: "#6D4C41",
+    5: "#8E24AA",
 }
 
 # Bobot kelas awal untuk CrossEntropy berbobot (PRD §A.5 Cell 6).
 # CATATAN: hitung ulang dari distribusi label sebenarnya setelah patch siap.
+# Indeks 5 = Tambang (kelas jarang → bobot tinggi).
 CLASS_WEIGHTS_DEFAULT: tuple[float, ...] = (0.8, 0.4, 2.0, 2.0, 1.0, 2.5)
 
 # ============================================================================
@@ -65,7 +66,7 @@ TRANSITION_MAP: dict[int, str] = {
     2: "hutan_ke_lahan_terbuka",
     3: "hutan_ke_sawit",
     4: "hutan_ke_pertanian_lain",
-    5: "hutan_ke_terbakar",
+    5: "hutan_ke_tambang",
 }
 
 # Warna hex untuk visualisasi transisi di WebGIS
@@ -73,14 +74,14 @@ TRANSITION_COLORS: dict[str, str] = {
     "hutan_ke_lahan_terbuka": "#7F1D1D",
     "hutan_ke_sawit": "#F97316",
     "hutan_ke_pertanian_lain": "#EAB308",
-    "hutan_ke_terbakar": "#6D4C41",
+    "hutan_ke_tambang": "#8E24AA",
 }
 
 TRANSITION_LABELS: dict[str, str] = {
     "hutan_ke_lahan_terbuka": "Hutan → Lahan Terbuka",
     "hutan_ke_sawit": "Hutan → Sawit",
     "hutan_ke_pertanian_lain": "Hutan → Pertanian Lain",
-    "hutan_ke_terbakar": "Hutan → Lahan Terbakar",
+    "hutan_ke_tambang": "Hutan → Tambang",
 }
 
 # ============================================================================
@@ -94,7 +95,7 @@ BAND_DESCRIPTIONS: dict[str, str] = {
     "B4": "Red (665 nm) - NDVI, kontras vegetasi",
     "B8": "NIR (842 nm) - vegetasi sehat, kunci utama",
     "B11": "SWIR1 (1610 nm) - pembeda hutan vs sawit muda",
-    "B12": "SWIR2 (2190 nm) - deteksi bakar (dNBR)",
+    "B12": "SWIR2 (2190 nm) - pembeda lahan terbuka/tambang & mineral",
 }
 
 N_BANDS: int = len(BANDS)
@@ -132,6 +133,9 @@ GEE_ASSETS: dict[str, str] = {
     "dynamic_world": "GOOGLE/DYNAMICWORLD/V1",
     "hansen_gfc": "UMD/hansen/global_forest_change_2025_v1_13",
     "biopama_oilpalm": "BIOPAMA/GlobalOilPalm/v1",
+    # Tang & Werner (2023) Global Mining Footprint — FeatureCollection poligon
+    # tambang (pit, tailing, dll), didelineasi dari Sentinel-2. CC BY-4.0.
+    "mining": "projects/sat-io/open-datasets/global-mining/global_mining_footprints",
 }
 
 # ============================================================================

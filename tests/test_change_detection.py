@@ -19,7 +19,7 @@ def test_detects_all_four_transitions(sample_mask_t1, sample_mask_t2, sample_tra
     assert "hutan_ke_lahan_terbuka" in ttypes
     assert "hutan_ke_sawit" in ttypes
     assert "hutan_ke_pertanian_lain" in ttypes
-    assert "hutan_ke_terbakar" in ttypes
+    assert "hutan_ke_tambang" in ttypes
 
 
 def test_skips_when_no_change():

@@ -11,7 +11,7 @@ Mendukung kombinasi berbobot dari beberapa komponen loss yang tersedia di
 
 Default proyek (berbasis literatur class-imbalance, lihat PRD §A & review
 Jelas dkk. 2024): ``focal_tversky`` = 0.5·Focal + 0.5·Tversky(α=0.3, β=0.7).
-β>α menaikkan recall kelas minoritas (Sawit, Lahan Terbakar).
+β>α menaikkan recall kelas minoritas (Sawit, Tambang).
 
 Sumber: Abraham & Khan (Focal Tversky, 2019); Loss Functions Survey
 (arXiv 2312.05391, 2023).

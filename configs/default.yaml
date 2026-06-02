@@ -26,12 +26,12 @@ sentinel2:
   scl_mask_classes: [3, 8, 9, 10, 11]  # bayangan, awan, salju → buang
   reflectance_divisor: 10000
 
-# Label fusion (PRD §A.4) — ambang batas
+# Label fusion (PRD §A.4 revisi: kelas 5 = Tambang) — ambang batas
 label_fusion:
   hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19)
   hansen_erosion_pixels: 1   # morphological erosion radius
-  dnbr_threshold: 0.27       # ambang lahan terbakar
   default_class_id: 4        # inisialisasi: Pertanian Lain
+  # Kelas 5 Tambang dari poligon Global Mining Footprint (Tang & Werner 2023)
 
 # Ekspor ubin GEE
 export:
@@ -104,7 +104,7 @@ change_detection:
     2: "hutan_ke_lahan_terbuka"
     3: "hutan_ke_sawit"
     4: "hutan_ke_pertanian_lain"
-    5: "hutan_ke_terbakar"
+    5: "hutan_ke_tambang"
 
 # Outputs (7 file kontrak — PRD §B.1)
 outputs:

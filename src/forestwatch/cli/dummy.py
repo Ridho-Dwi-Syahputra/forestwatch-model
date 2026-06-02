@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
             {"class": "Deforestasi", "iou": 0.66, "f1": 0.79},
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
-            {"class": "Lahan Terbakar", "iou": 0.55, "f1": 0.71},
+            {"class": "Tambang", "iou": 0.55, "f1": 0.71},
         ],
         "confusion_matrix": _cm,
     }
@@ -177,7 +177,7 @@ def _make_dummy_landcover(size: int, rng: "Any") -> "Any":
         2: 25,   # Deforestasi
         3: 12,   # Sawit
         4: 30,   # Pertanian Lain
-        5: 4,    # Lahan Terbakar
+        5: 4,    # Tambang
     }
     for cls, n_blobs in n_blobs_per_class.items():
         for _ in range(n_blobs):
@@ -276,12 +276,12 @@ def _make_dummy_geojson(
 
 
 def _kawasan_status(province: str, ttype: str) -> str:
-    if province == "Papua Selatan" and ttype == "hutan_ke_pertanian_lain":
-        return "APL / Food Estate Merauke"
     if ttype == "hutan_ke_sawit":
         return "HGU / Perkebunan"
-    if ttype == "hutan_ke_terbakar":
-        return "Areal terdegradasi"
+    if ttype == "hutan_ke_tambang":
+        return "IUP / Konsesi Tambang"
+    if ttype == "hutan_ke_pertanian_lain":
+        return "APL / Lahan Pertanian"
     return "Areal Penggunaan Lain"
 
 

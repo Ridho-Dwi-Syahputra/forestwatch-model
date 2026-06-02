@@ -1,4 +1,4 @@
-"""Deteksi perubahan 4 transisi: Hutan → {Lahan Terbuka, Sawit, Pertanian Lain, Terbakar}.
+"""Deteksi perubahan 4 transisi: Hutan → {Lahan Terbuka, Sawit, Pertanian Lain, Tambang}.
 
 Sumber: PRD §A.5 Cell 9 (blok change detection).
 

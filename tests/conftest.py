@@ -27,7 +27,7 @@ def sample_mask_t2(sample_mask_t1):
     mask[30:35, 30:40] = 3  # Hutan -> Sawit
     mask[70:80, 20:30] = 4  # Hutan -> Pertanian Lain
     mask[40:45, 70:80] = 2  # Hutan -> Lahan Terbuka
-    mask[80:82, 80:82] = 5  # Hutan -> Lahan Terbakar
+    mask[80:82, 80:82] = 5  # Hutan -> Tambang
     return mask
 
 
@@ -134,7 +134,7 @@ def sample_feature_collection():
                 },
                 "properties": {
                     "id": "DF-00004",
-                    "transition_type": "hutan_ke_terbakar",
+                    "transition_type": "hutan_ke_tambang",
                     "area_ha": 1.0,
                     "period_from": 2021,
                     "period_to": 2024,
@@ -179,7 +179,7 @@ def sample_metrics():
             {"class": "Deforestasi", "iou": 0.66, "f1": 0.79},
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
-            {"class": "Lahan Terbakar", "iou": 0.55, "f1": 0.71},
+            {"class": "Tambang", "iou": 0.55, "f1": 0.71},
         ],
         "confusion_matrix": [
             [100, 1, 0, 0, 1, 0],

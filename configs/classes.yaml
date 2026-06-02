@@ -43,12 +43,12 @@ classes:
     description: "Padi, jagung, sagu, semak, rumput, terbangun"
 
   - id: 5
-    name: "Lahan Terbakar"
-    name_en: "Burned"
-    color: "#6D4C41"
-    rgb: [109, 76, 65]
+    name: "Tambang"
+    name_en: "Mining"
+    color: "#8E24AA"
+    rgb: [142, 36, 170]
     weight: 2.5
-    description: "Area dengan tanda bakar (dNBR tinggi)"
+    description: "Area pertambangan (pit, tailing, dll) — Global Mining Footprint"
 
 # Warna untuk 4 jenis transisi deforestasi (PRD §B.1.3 catatan)
 transitions:
@@ -64,7 +64,7 @@ transitions:
     color: "#EAB308"
     label: "Hutan → Pertanian Lain"
     target_class: 4
-  hutan_ke_terbakar:
-    color: "#6D4C41"
-    label: "Hutan → Lahan Terbakar"
+  hutan_ke_tambang:
+    color: "#8E24AA"
+    label: "Hutan → Tambang"
     target_class: 5

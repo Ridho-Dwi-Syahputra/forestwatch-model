@@ -10,11 +10,11 @@ from forestwatch.outputs.statistics import build_statistics_json, summarize_geoj
 def test_summarize_aggregates_per_transition(sample_feature_collection):
     summary = summarize_geojson_transitions(sample_feature_collection)
     pt = summary["per_transition_ha"]
-    # Dari fixture: 2 sawit (12.4 + 20.5), 1 pertanian (5.1), 1 lahan terbuka (2.8), 1 terbakar (1.0)
+    # Dari fixture: 2 sawit (12.4 + 20.5), 1 pertanian (5.1), 1 lahan terbuka (2.8), 1 tambang (1.0)
     assert pt["hutan_ke_sawit"] == 32.9
     assert pt["hutan_ke_pertanian_lain"] == 5.1
     assert pt["hutan_ke_lahan_terbuka"] == 2.8
-    assert pt["hutan_ke_terbakar"] == 1.0
+    assert pt["hutan_ke_tambang"] == 1.0
     assert summary["n_hotspots"] == 5
     assert summary["total_deforestation_ha"] == 41.8
 
@@ -41,7 +41,7 @@ def test_build_statistics_json_full_schema(tmp_path, sample_feature_collection, 
             "Deforestasi": 5000.0,
             "Sawit": 2500.0,
             "Pertanian Lain": 3000.0,
-            "Lahan Terbakar": 50.0,
+            "Tambang": 50.0,
         },
         model_metrics=sample_metrics,
         out_path=out,

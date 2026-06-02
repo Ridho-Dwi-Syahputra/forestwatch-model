@@ -1,4 +1,4 @@
-"""Label fusion 6 aturan — inti metodologi PRD §A.4.
+"""Label fusion 6 aturan — inti metodologi PRD §A.4 (revisi: kelas 5 = Tambang).
 
 Aturan diterapkan **berurutan** karena aturan berikutnya menimpa yang sebelumnya:
 
@@ -6,10 +6,14 @@ Aturan diterapkan **berurutan** karena aturan berikutnya menimpa yang sebelumnya
     2. Perairan (ESA water/wetland/mangrove ∩ DW water/flooded) → 0
     3. Hutan (ESA tree_cover ∩ DW trees) → 1
     4. Lahan Terbuka (ESA bare ∪ DW bare) → 2
-    5a. Cropland ∩ BIOPAMA oil palm → 3 (Sawit)
-    5b. Cropland ∩ NOT oil palm → 4 (Pertanian Lain eksplisit)
+    5b. Cropland → 4 (Pertanian Lain eksplisit)
     6. Hansen lossyear >= 19 (setelah erosion 1 piksel) → 2 (Deforestasi, MENIMPA)
-    7. dNBR >= threshold → 5 (Lahan Terbakar, MENIMPA)
+    7. Poligon Tambang (Tang & Werner 2023) → 5 (Tambang, MENIMPA)
+    5a. BIOPAMA oil palm → 3 (Sawit, DITERAPKAN TERAKHIR agar pasti terwakili)
+
+Catatan revisi: kelas 5 yang dulu "Lahan Terbakar" (dNBR) DIGANTI menjadi
+"Tambang" memakai Global Mining Footprint (poligon, didelineasi dari Sentinel-2),
+karena lebih relevan untuk Papua (mis. Grasberg) & berbasis dataset tervalidasi.
 """
 
 from __future__ import annotations
@@ -17,7 +21,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from forestwatch.constants import GEE_ASSETS
-from forestwatch.gee.composite import compute_dnbr
 
 if TYPE_CHECKING:
     import ee
@@ -29,23 +32,22 @@ def build_label(
     *,
     hansen_loss_year_min: int = 19,
     hansen_erosion_pixels: int = 1,
-    dnbr_threshold: float = 0.27,
     default_class_id: int = 4,
     dw_filter_year: int | None = None,
 ) -> "ee.Image":
-    """Bangun ``ee.Image`` label 6 kelas dengan 6 aturan fusion (PRD §A.4).
+    """Bangun ``ee.Image`` label 6 kelas dengan aturan fusion (PRD §A.4 revisi).
 
     Args:
         region: ``ee.Geometry`` area of interest (mis. Papua).
-        label_year: Tahun untuk komputasi dNBR & filter Dynamic World.
+        label_year: Tahun untuk filter Dynamic World.
         hansen_loss_year_min: Threshold ``lossyear`` (19 = sejak 2019).
         hansen_erosion_pixels: Radius erosi morfologi untuk Hansen.
-        dnbr_threshold: Ambang dNBR untuk kelas Lahan Terbakar.
         default_class_id: ID kelas awal sebelum aturan diterapkan.
         dw_filter_year: Tahun untuk mode Dynamic World. Default = ``label_year``.
 
     Returns:
-        ``ee.Image`` 1 band ``label`` (uint8) dengan nilai 0..5.
+        ``ee.Image`` 1 band ``label`` (uint8) dengan nilai 0..5
+        (5 = Tambang).
     """
     import ee  # noqa: PLC0415
 
@@ -78,8 +80,10 @@ def build_label(
     )
     is_oilpalm = oilpalm.eq(1).Or(oilpalm.eq(2)).unmask(0)  # industrial OR smallholder
 
-    dnbr = compute_dnbr(label_year, region)
-    is_burned = dnbr.gte(dnbr_threshold)
+    # Tambang: rasterisasi poligon Global Mining Footprint (Tang & Werner 2023).
+    # FeatureCollection → mask 1 di area tambang, 0 di luar.
+    mining_fc = ee.FeatureCollection(GEE_ASSETS["mining"]).filterBounds(region)
+    is_mining = ee.Image().byte().paint(mining_fc, 1).unmask(0)
 
     # ---- 6 aturan fusion (urutan penting) ----
     label = ee.Image(default_class_id).rename("label")
@@ -105,8 +109,8 @@ def build_label(
     # Aturan 6: Deforestasi (Hansen, MENIMPA)
     label = label.where(defo_eroded, 2)
 
-    # Aturan 7: Lahan Terbakar (dNBR, MENIMPA)
-    label = label.where(is_burned, 5)
+    # Aturan 7: Tambang (poligon Global Mining Footprint, MENIMPA)
+    label = label.where(is_mining, 5)
 
     # Aturan 5a (DITERAPKAN TERAKHIR): Sawit langsung dari BIOPAMA.
     # BIOPAMA adalah peta sawit terdedikasi & tervalidasi (Descals dkk. 2021);
@@ -128,17 +132,17 @@ def apply_label_fusion_numpy(
     dw: "object",
     hansen_loss_eroded: "object",
     is_oilpalm: "object",
-    is_burned: "object",
+    is_mining: "object",
     *,
     default_class_id: int = 4,
 ):
     """Versi numpy dari ``build_label`` — untuk unit test.
 
     Semua input adalah numpy ``ndarray`` dengan shape yang sama. Return label
-    ``uint8`` dengan nilai 0..5. Lazy import numpy.
+    ``uint8`` dengan nilai 0..5 (5 = Tambang). Lazy import numpy.
 
     CATATAN: input boolean-masks (``hansen_loss_eroded``, ``is_oilpalm``,
-    ``is_burned``) di-cast ke bool eksplisit untuk menghindari advanced
+    ``is_mining``) di-cast ke bool eksplisit untuk menghindari advanced
     indexing yang tidak sengaja saat user mengirim ``uint8``.
     """
     import numpy as np  # noqa: PLC0415
@@ -147,7 +151,7 @@ def apply_label_fusion_numpy(
     dw = np.asarray(dw)
     is_oilpalm_b = np.asarray(is_oilpalm).astype(bool)
     hansen_b = np.asarray(hansen_loss_eroded).astype(bool)
-    burned_b = np.asarray(is_burned).astype(bool)
+    mining_b = np.asarray(is_mining).astype(bool)
 
     label = np.full(esa.shape, default_class_id, dtype=np.uint8)
 
@@ -167,7 +171,7 @@ def apply_label_fusion_numpy(
 
     label[hansen_b] = 2                  # MENIMPA: Deforestasi
 
-    label[burned_b] = 5                  # MENIMPA: Lahan Terbakar
+    label[mining_b] = 5                  # MENIMPA: Tambang (poligon mining footprint)
 
     label[is_oilpalm_b] = 3              # TERAKHIR: Sawit dari BIOPAMA (pasti terwakili)
 

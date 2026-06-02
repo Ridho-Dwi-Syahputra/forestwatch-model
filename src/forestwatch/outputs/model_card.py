@@ -43,7 +43,7 @@ def render_model_card(
             "Hansen GFC bersumber Landsat 30 m yang di-resample ke 10 m; morphological erosion 1 piksel digunakan untuk mengurangi noise tepi.",
             "BIOPAMA Oil Palm v1 hanya tahun 2019 — sawit muda pasca-2019 ditangkap via deteksi perubahan, bukan kelas statis.",
             "Sawit muda (0–3 tahun) sulit dibedakan dari semak karena kanopi belum menutup.",
-            "Kelas Lahan Terbakar diestimasi dari dNBR Sentinel-2; tidak ada dataset bakar pixel-aligned 10 m yang gratis.",
+            "Kelas Tambang berasal dari Global Mining Footprint (Tang & Werner 2023, snapshot ~2023); ekspansi tambang terbaru perlu pemutakhiran dataset.",
         ]
     if intended_use is None:
         intended_use = [

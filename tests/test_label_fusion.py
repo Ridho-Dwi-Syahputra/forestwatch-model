@@ -18,7 +18,7 @@ def test_default_class_is_4_when_nothing_matches():
         dw=_zero_like(shape),
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     assert np.all(label == 4)  # Pertanian Lain default
 
@@ -31,7 +31,7 @@ def test_rule_water_requires_both_esa_and_dw():
         esa=esa, dw=dw,
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     assert np.all(label == 0)
 
@@ -44,7 +44,7 @@ def test_rule_water_skipped_if_only_one_source():
         esa=esa, dw=dw,
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     # Tidak dapat label water - fallback ke default 4
     assert np.all(label == 4)
@@ -58,7 +58,7 @@ def test_rule_forest_consensus():
         esa=esa, dw=dw,
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     assert np.all(label == 1)
 
@@ -72,7 +72,7 @@ def test_rule_bare_only_needs_one():
         esa=esa, dw=dw,
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     assert np.all(label == 2)
 
@@ -91,7 +91,7 @@ def test_rule_cropland_splits_by_oilpalm():
         esa=esa, dw=dw,
         hansen_loss_eroded=_zero_like(shape),
         is_oilpalm=is_oilpalm,
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     expected = np.array(
         [
@@ -115,7 +115,7 @@ def test_rule_hansen_loss_overrides_other_classes():
         esa=esa, dw=dw,
         hansen_loss_eroded=hansen,
         is_oilpalm=_zero_like(shape),
-        is_burned=_zero_like(shape),
+        is_mining=_zero_like(shape),
     )
     # Baris atas -> Deforestasi (2)
     assert np.all(label[0:2, :] == 2)
@@ -123,20 +123,20 @@ def test_rule_hansen_loss_overrides_other_classes():
     assert np.all(label[2:, :] == 1)
 
 
-def test_rule_burned_overrides_everything():
+def test_rule_mining_overrides_everything():
     shape = (3, 3)
     esa = np.full(shape, 10, dtype=np.uint8)
     dw = np.full(shape, 1, dtype=np.uint8)
     hansen = np.ones(shape, dtype=np.uint8)  # deforestasi
-    burned = np.zeros(shape, dtype=np.uint8)
-    burned[1, 1] = 1  # center burned
+    mining = np.zeros(shape, dtype=np.uint8)
+    mining[1, 1] = 1  # center tambang
     label = apply_label_fusion_numpy(
         esa=esa, dw=dw,
         hansen_loss_eroded=hansen,
         is_oilpalm=_zero_like(shape),
-        is_burned=burned,
+        is_mining=mining,
     )
-    assert label[1, 1] == 5  # terbakar menimpa
+    assert label[1, 1] == 5  # tambang menimpa
     # Sekeliling tetap deforestasi
     assert label[0, 0] == 2
 
@@ -152,12 +152,12 @@ def test_rule_order_matters():
     dw = np.full(shape, 4, dtype=np.uint8)
     is_oilpalm = np.full(shape, True)         # semua piksel = sawit (BIOPAMA)
     hansen = np.array([[1, 0, 1, 0]], dtype=np.uint8)
-    burned = np.array([[0, 0, 1, 1]], dtype=np.uint8)
+    mining = np.array([[0, 0, 1, 1]], dtype=np.uint8)
     label = apply_label_fusion_numpy(
         esa=esa, dw=dw,
         hansen_loss_eroded=hansen,
         is_oilpalm=is_oilpalm,
-        is_burned=burned,
+        is_mining=mining,
     )
     # is_oilpalm True di semua piksel & diterapkan terakhir → semua jadi Sawit (3)
     expected = np.array([[3, 3, 3, 3]], dtype=np.uint8)

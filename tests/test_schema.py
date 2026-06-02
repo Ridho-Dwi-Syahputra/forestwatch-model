@@ -23,7 +23,7 @@ def test_legend_valid():
         {"id": 2, "name": "Deforestasi", "color": "#E03B24"},
         {"id": 3, "name": "Sawit", "color": "#F97316"},
         {"id": 4, "name": "Pertanian Lain", "color": "#E9C46A"},
-        {"id": 5, "name": "Lahan Terbakar", "color": "#6D4C41"},
+        {"id": 5, "name": "Tambang", "color": "#8E24AA"},
     ]
     report = validate_legend_json(legend)
     assert report.ok
