@@ -7,11 +7,11 @@ import json
 from forestwatch.outputs.legend import build_legend_json
 
 
-def test_build_legend_returns_six_entries():
+def test_build_legend_returns_all_entries():
     legend = build_legend_json()
-    assert len(legend) == 6
+    assert len(legend) == 7
     ids = [e["id"] for e in legend]
-    assert ids == [0, 1, 2, 3, 4, 5]
+    assert ids == [0, 1, 2, 3, 4, 5, 6]
     names = [e["name"] for e in legend]
     assert "Perairan" in names
     assert "Hutan" in names

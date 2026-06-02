@@ -77,4 +77,4 @@ def test_compute_per_class_area_ha():
     assert areas["Hutan"] == 1.0
     assert areas["Perairan"] == 0.0
     # Semua nama kelas hadir
-    assert len(areas) == 6
+    assert len(areas) == 7

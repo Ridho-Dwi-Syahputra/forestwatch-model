@@ -110,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
             {"class": "Tambang", "iou": 0.55, "f1": 0.71},
+            {"class": "Permukiman", "iou": 0.58, "f1": 0.73},
         ],
         "confusion_matrix": _cm,
     }
@@ -165,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _make_dummy_landcover(size: int, rng: "Any") -> "Any":
-    """Buat mask dummy 6 kelas: dominan hutan dengan patch acak kelas lain."""
+    """Buat mask dummy 7 kelas: dominan hutan dengan patch acak kelas lain."""
     import numpy as np  # noqa: PLC0415
 
     H = W = int(size)
@@ -178,6 +179,7 @@ def _make_dummy_landcover(size: int, rng: "Any") -> "Any":
         3: 12,   # Sawit
         4: 30,   # Pertanian Lain
         5: 4,    # Tambang
+        6: 5,    # Permukiman
     }
     for cls, n_blobs in n_blobs_per_class.items():
         for _ in range(n_blobs):
@@ -204,7 +206,7 @@ def _erode_some_forest_to_simulate_change(
         return mask
     fx, fy = np.where(forest)
     indices = rng.choice(len(fx), size=n_change, replace=False)
-    target_classes = rng.choice([2, 3, 4, 5], size=n_change, p=[0.25, 0.4, 0.3, 0.05])
+    target_classes = rng.choice([2, 3, 4, 5, 6], size=n_change, p=[0.22, 0.38, 0.28, 0.06, 0.06])
     mask[fx[indices], fy[indices]] = target_classes.astype(np.uint8)
     return mask
 
@@ -221,8 +223,9 @@ def _make_dummy_geojson(
 
     min_lon, min_lat, max_lon, max_lat = bbox
     transition_names = list(TRANSITION_MAP.values())
-    # Bobot transisi: sawit dominan
-    weights = np.array([0.25, 0.45, 0.20, 0.10])
+    # Bobot transisi: sawit dominan, permukiman paling jarang
+    # (urut: lahan_terbuka, sawit, pertanian_lain, tambang, permukiman)
+    weights = np.array([0.22, 0.42, 0.18, 0.10, 0.08])
     weights = weights / weights.sum()
     province_weights = np.array(
         [
@@ -282,6 +285,8 @@ def _kawasan_status(province: str, ttype: str) -> str:
         return "IUP / Konsesi Tambang"
     if ttype == "hutan_ke_pertanian_lain":
         return "APL / Lahan Pertanian"
+    if ttype == "hutan_ke_permukiman":
+        return "Kawasan Permukiman / Terbangun"
     return "Areal Penggunaan Lain"
 
 
@@ -308,15 +313,20 @@ def _per_class_area_from_mask(mask: "Any", pixel_area_ha: float) -> dict[str, fl
 
 
 def _dummy_confusion_matrix(rng: "Any") -> list[list[int]]:
-    """Generate confusion matrix dummy 6×6 dengan diagonal kuat."""
+    """Generate confusion matrix dummy N×N dengan diagonal kuat."""
     import numpy as np  # noqa: PLC0415
 
-    cm = np.zeros((6, 6), dtype=int)
-    diagonal_ranges = [(900, 1000), (4500, 5000), (200, 400), (180, 360), (350, 500), (50, 120)]
+    n = len(CLASS_NAMES)
+    # Rentang diagonal per kelas (Permukiman = kelas langka → kecil).
+    diagonal_ranges = [
+        (900, 1000), (4500, 5000), (200, 400), (180, 360),
+        (350, 500), (50, 120), (40, 110),
+    ][:n]
+    cm = np.zeros((n, n), dtype=int)
     for i, (lo, hi) in enumerate(diagonal_ranges):
         cm[i, i] = int(rng.integers(lo, hi))
         # noise off-diagonal
-        for j in range(6):
+        for j in range(n):
             if i == j:
                 continue
             cm[i, j] = int(rng.integers(0, max(1, cm[i, i] // 20)))

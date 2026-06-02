@@ -8,8 +8,9 @@ Papua yang ~75–85% hutan). Lihat catatan EDA di notebook.
 
 **Pendekatan baru — Dynamic World sebagai PETA DASAR (consensus product):**
 
-    1. Peta dasar  = Dynamic World (mode tahunan), di-remap 9→6 kelas
+    1. Peta dasar  = Dynamic World (mode tahunan), di-remap 9→7 kelas
        (lihat ``constants.DW_TO_CLASS``). Lengkap, tanpa "default Pertanian Lain".
+       DW "Built" (6) → Permukiman (kelas 6); Bare/Snow → Lahan Terbuka (2).
     2. (opsional) Perkuat Hutan dgn ESA WorldCover via UNION — hanya MENAMBAH
        hutan, tidak pernah menjatuhkannya ke kelas lain.
     3. Overlay tematik (urutan menimpa):
@@ -46,7 +47,7 @@ def build_label(
     dw_filter_year: int | None = None,
     esa_forest_union: bool = False,
 ) -> "ee.Image":
-    """Bangun ``ee.Image`` label 6 kelas — Dynamic World base + overlay tematik.
+    """Bangun ``ee.Image`` label 7 kelas — Dynamic World base + overlay tematik.
 
     Args:
         region: ``ee.Geometry`` area of interest (mis. Papua).
@@ -59,14 +60,15 @@ def build_label(
             hanya menambah hutan, tidak menghapus). Default False (murni DW).
 
     Returns:
-        ``ee.Image`` 1 band ``label`` (uint8) bernilai 0..5 (5 = Tambang).
+        ``ee.Image`` 1 band ``label`` (uint8) bernilai 0..6
+        (5 = Tambang, 6 = Permukiman).
     """
     import ee  # noqa: PLC0415
 
     if dw_filter_year is None:
         dw_filter_year = label_year
 
-    # ---- 1. PETA DASAR: Dynamic World (mode tahunan), remap 9→6 ----
+    # ---- 1. PETA DASAR: Dynamic World (mode tahunan), remap 9→7 ----
     dw = (
         ee.ImageCollection(GEE_ASSETS["dynamic_world"])
         .filterBounds(region)
@@ -131,19 +133,19 @@ def apply_label_fusion_numpy(
     """Versi numpy dari ``build_label`` (DW-base) — untuk unit test.
 
     Args:
-        dw: ndarray label Dynamic World (nilai 0..8).
+        dw: ndarray label Dynamic World (nilai 0..8; Built=6 → Permukiman).
         hansen_loss_eroded: ndarray boolean — piksel Deforestasi (Hansen).
         is_mining: ndarray boolean — piksel Tambang (poligon mining).
         is_palm: ndarray boolean — piksel Sawit (FDP palm ≥ ambang).
         esa: (opsional) ndarray ESA WorldCover untuk UNION Hutan.
 
     Returns:
-        Label ``uint8`` 0..5 (5 = Tambang). Lazy import numpy.
+        Label ``uint8`` 0..6 (5 = Tambang, 6 = Permukiman). Lazy import numpy.
     """
     import numpy as np  # noqa: PLC0415
 
     dw = np.asarray(dw)
-    # Peta dasar: remap DW 9→6.
+    # Peta dasar: remap DW 9→7.
     label = np.zeros(dw.shape, dtype=np.uint8)
     for src, dst in DW_TO_CLASS.items():
         label[dw == src] = dst

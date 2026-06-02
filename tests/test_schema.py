@@ -24,6 +24,7 @@ def test_legend_valid():
         {"id": 3, "name": "Sawit", "color": "#F97316"},
         {"id": 4, "name": "Pertanian Lain", "color": "#E9C46A"},
         {"id": 5, "name": "Tambang", "color": "#8E24AA"},
+        {"id": 6, "name": "Permukiman", "color": "#757575"},
     ]
     report = validate_legend_json(legend)
     assert report.ok
@@ -40,7 +41,7 @@ def test_legend_duplicate_id():
     bad = [
         {"id": 0, "name": "A", "color": "#000000"},
         {"id": 0, "name": "B", "color": "#FFFFFF"},
-    ] + [{"id": i, "name": f"X{i}", "color": "#123456"} for i in range(1, 5)]
+    ] + [{"id": i, "name": f"X{i}", "color": "#123456"} for i in range(1, 6)]
     report = validate_legend_json(bad)
     assert not report.ok
     assert any("duplikat" in e for e in report.errors)

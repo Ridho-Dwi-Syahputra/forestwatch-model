@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from forestwatch.constants import N_CLASSES
+
 if TYPE_CHECKING:
     import torch.nn as nn
 
@@ -19,7 +21,7 @@ def build_unet(
     encoder_name: str = "resnet50",
     encoder_weights: str | None = "imagenet",
     in_channels: int = 6,
-    classes: int = 6,
+    classes: int = N_CLASSES,
     activation: str | None = None,
 ) -> "nn.Module":
     """Build U-Net (atau variant) dari segmentation-models-pytorch.

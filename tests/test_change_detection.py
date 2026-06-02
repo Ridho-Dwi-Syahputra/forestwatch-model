@@ -7,19 +7,20 @@ import numpy as np
 from forestwatch.inference.change_detection import detect_transitions_from_arrays
 
 
-def test_detects_all_four_transitions(sample_mask_t1, sample_mask_t2, sample_transform):
+def test_detects_all_transitions(sample_mask_t1, sample_mask_t2, sample_transform):
     features = detect_transitions_from_arrays(
         sample_mask_t1,
         sample_mask_t2,
         sample_transform,
         min_area_ha=0.0,  # tidak filter area di test
     )
-    # Setidaknya ada feature dari masing-masing 4 transisi
+    # Setidaknya ada feature dari masing-masing 5 transisi (termasuk Permukiman)
     ttypes = {f["properties"]["transition_type"] for f in features}
     assert "hutan_ke_lahan_terbuka" in ttypes
     assert "hutan_ke_sawit" in ttypes
     assert "hutan_ke_pertanian_lain" in ttypes
     assert "hutan_ke_tambang" in ttypes
+    assert "hutan_ke_permukiman" in ttypes
 
 
 def test_skips_when_no_change():

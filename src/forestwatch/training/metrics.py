@@ -6,6 +6,8 @@ import random
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+from forestwatch.constants import N_CLASSES
+
 if TYPE_CHECKING:
     import numpy as np
     import torch
@@ -31,7 +33,7 @@ def set_seed(seed: int = 42) -> None:
 
 
 def compute_confusion_matrix(
-    pred: "np.ndarray", target: "np.ndarray", *, n_classes: int = 6
+    pred: "np.ndarray", target: "np.ndarray", *, n_classes: int = N_CLASSES
 ) -> "np.ndarray":
     """Confusion matrix ``(n_classes, n_classes)`` dengan rows=true, cols=pred.
 
@@ -110,7 +112,7 @@ def cohen_kappa(cm: "np.ndarray", *, eps: float = 1e-9) -> float:
 def median_frequency_weights(
     distribution: "dict[int, int]",
     *,
-    n_classes: int = 6,
+    n_classes: int = N_CLASSES,
     clip_min: float = 0.3,
     clip_max: float = 5.0,
     eps: float = 1e-9,

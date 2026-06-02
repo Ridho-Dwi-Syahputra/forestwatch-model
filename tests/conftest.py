@@ -22,12 +22,13 @@ def sample_mask_t1():
 
 @pytest.fixture
 def sample_mask_t2(sample_mask_t1):
-    """Mask T2 (2024) - sebagian hutan berubah jadi sawit/pertanian/terbuka/terbakar."""
+    """Mask T2 (2024) - sebagian hutan berubah jadi sawit/pertanian/terbuka/tambang/permukiman."""
     mask = sample_mask_t1.copy()
     mask[30:35, 30:40] = 3  # Hutan -> Sawit
     mask[70:80, 20:30] = 4  # Hutan -> Pertanian Lain
     mask[40:45, 70:80] = 2  # Hutan -> Lahan Terbuka
     mask[80:82, 80:82] = 5  # Hutan -> Tambang
+    mask[85:90, 10:15] = 6  # Hutan -> Permukiman
     return mask
 
 
@@ -180,13 +181,15 @@ def sample_metrics():
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
             {"class": "Tambang", "iou": 0.55, "f1": 0.71},
+            {"class": "Permukiman", "iou": 0.58, "f1": 0.73},
         ],
         "confusion_matrix": [
-            [100, 1, 0, 0, 1, 0],
-            [2, 5000, 50, 30, 20, 5],
-            [0, 40, 200, 10, 5, 2],
-            [0, 30, 8, 180, 10, 0],
-            [1, 20, 5, 12, 350, 1],
-            [0, 5, 2, 1, 2, 60],
+            [100, 1, 0, 0, 1, 0, 0],
+            [2, 5000, 50, 30, 20, 5, 8],
+            [0, 40, 200, 10, 5, 2, 1],
+            [0, 30, 8, 180, 10, 0, 0],
+            [1, 20, 5, 12, 350, 1, 3],
+            [0, 5, 2, 1, 2, 60, 0],
+            [0, 8, 1, 0, 3, 0, 55],
         ],
     }

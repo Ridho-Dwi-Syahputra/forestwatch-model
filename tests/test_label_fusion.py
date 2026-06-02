@@ -64,7 +64,7 @@ def test_dw_crops_grass_shrub_become_pertanian_lain():
     assert np.all(label == 4)
 
 
-def test_dw_built_bare_snow_become_lahan_terbuka():
+def test_dw_built_becomes_permukiman_bare_snow_lahan_terbuka():
     dw = np.array([[6, 7, 8]], dtype=np.uint8)  # built, bare, snow
     label = apply_label_fusion_numpy(
         dw=dw,
@@ -72,7 +72,8 @@ def test_dw_built_bare_snow_become_lahan_terbuka():
         is_mining=_z(dw.shape),
         is_palm=_z(dw.shape),
     )
-    assert np.all(label == 2)
+    # Built → Permukiman (6); Bare & Snow → Lahan Terbuka (2).
+    np.testing.assert_array_equal(label, np.array([[6, 2, 2]], dtype=np.uint8))
 
 
 def test_esa_union_adds_forest_where_dw_undercalls():
@@ -151,4 +152,4 @@ def test_palm_applied_last_overrides_all():
 def test_dw_to_class_covers_all_nine_dw_classes():
     """Sanity: DW_TO_CLASS lengkap (0..8) & target valid (0..5)."""
     assert sorted(DW_TO_CLASS.keys()) == list(range(9))
-    assert all(0 <= v <= 5 for v in DW_TO_CLASS.values())
+    assert all(0 <= v <= 6 for v in DW_TO_CLASS.values())

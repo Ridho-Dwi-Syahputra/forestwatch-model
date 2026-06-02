@@ -15,7 +15,7 @@ def render_model_card(
     architecture: str = "U-Net",
     encoder: str = "ResNet-50 (ImageNet pretrained)",
     in_channels: int = 6,
-    n_classes: int = 6,
+    n_classes: int = 7,
     patch_size: int = 256,
     n_parameters: int | None = None,
     training_dataset: str = "Sentinel-2 SR Harmonized + ESA WorldCover + Dynamic World + Hansen GFC + BIOPAMA Oil Palm",

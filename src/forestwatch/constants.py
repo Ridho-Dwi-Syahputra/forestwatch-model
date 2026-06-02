@@ -9,9 +9,9 @@ from __future__ import annotations
 # ============================================================================
 # 6 KELAS TUTUPAN LAHAN (PRD §A.3)
 # ============================================================================
-N_CLASSES: int = 6
+N_CLASSES: int = 7
 
-CLASS_IDS: tuple[int, ...] = (0, 1, 2, 3, 4, 5)
+CLASS_IDS: tuple[int, ...] = (0, 1, 2, 3, 4, 5, 6)
 
 CLASS_NAMES: tuple[str, ...] = (
     "Perairan",
@@ -20,6 +20,7 @@ CLASS_NAMES: tuple[str, ...] = (
     "Sawit",
     "Pertanian Lain",
     "Tambang",
+    "Permukiman",
 )
 
 CLASS_NAMES_EN: tuple[str, ...] = (
@@ -29,6 +30,7 @@ CLASS_NAMES_EN: tuple[str, ...] = (
     "Oil Palm",
     "Other Agriculture",
     "Mining",
+    "Built-up/Settlement",
 )
 
 # Palette warna untuk render PNG (PRD §A.5 Cell 10)
@@ -39,6 +41,7 @@ PALETTE_RGB: dict[int, tuple[int, int, int]] = {
     3: (249, 115, 22),   # Sawit          — oranye
     4: (233, 196, 106),  # Pertanian Lain — kuning
     5: (142, 36, 170),   # Tambang        — ungu
+    6: (117, 117, 117),  # Permukiman     — abu-abu
 }
 
 # Hex colors untuk legend.json (PRD §B.1.3)
@@ -49,12 +52,13 @@ CLASS_COLORS: dict[int, str] = {
     3: "#F97316",
     4: "#E9C46A",
     5: "#8E24AA",
+    6: "#757575",
 }
 
 # Bobot kelas awal untuk CrossEntropy berbobot (PRD §A.5 Cell 6).
 # CATATAN: hitung ulang dari distribusi label sebenarnya setelah patch siap.
-# Indeks 5 = Tambang (kelas jarang → bobot tinggi).
-CLASS_WEIGHTS_DEFAULT: tuple[float, ...] = (0.8, 0.4, 2.0, 2.0, 1.0, 2.5)
+# Indeks 5 = Tambang, 6 = Permukiman (kelas jarang → bobot tinggi).
+CLASS_WEIGHTS_DEFAULT: tuple[float, ...] = (0.8, 0.4, 2.0, 2.0, 1.0, 2.5, 2.5)
 
 # ============================================================================
 # 4 JENIS TRANSISI DEFORESTASI (PRD §A.5 Cell 9, §B.1.3)
@@ -67,6 +71,7 @@ TRANSITION_MAP: dict[int, str] = {
     3: "hutan_ke_sawit",
     4: "hutan_ke_pertanian_lain",
     5: "hutan_ke_tambang",
+    6: "hutan_ke_permukiman",
 }
 
 # Warna hex untuk visualisasi transisi di WebGIS
@@ -75,6 +80,7 @@ TRANSITION_COLORS: dict[str, str] = {
     "hutan_ke_sawit": "#F97316",
     "hutan_ke_pertanian_lain": "#EAB308",
     "hutan_ke_tambang": "#8E24AA",
+    "hutan_ke_permukiman": "#757575",
 }
 
 TRANSITION_LABELS: dict[str, str] = {
@@ -82,6 +88,7 @@ TRANSITION_LABELS: dict[str, str] = {
     "hutan_ke_sawit": "Hutan → Sawit",
     "hutan_ke_pertanian_lain": "Hutan → Pertanian Lain",
     "hutan_ke_tambang": "Hutan → Tambang",
+    "hutan_ke_permukiman": "Hutan → Permukiman",
 }
 
 # ============================================================================
@@ -156,7 +163,7 @@ DW_TO_CLASS: dict[int, int] = {
     3: 0,  # Flooded Veg     → Perairan (rawa/wetland)
     4: 4,  # Crops           → Pertanian Lain
     5: 4,  # Shrub/Scrub     → Pertanian Lain (vegetasi non-hutan)
-    6: 2,  # Built           → Deforestasi/Lahan Terbuka (non-vegetasi)
+    6: 6,  # Built           → Permukiman (lahan terbangun)
     7: 2,  # Bare            → Deforestasi/Lahan Terbuka
     8: 2,  # Snow/Ice        → Deforestasi/Lahan Terbuka (Puncak Jaya, sangat kecil)
 }

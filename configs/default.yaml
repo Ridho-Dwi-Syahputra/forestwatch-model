@@ -57,20 +57,24 @@ model:
   encoder_name: "resnet50"
   encoder_weights: "imagenet"
   in_channels: 6
-  classes: 6
+  classes: 7
   activation: null           # null = logits (softmax di loss)
 
 # Training
 training:
   batch_size: 8
   num_workers: 2
-  epochs: 50
-  patience: 10               # early stopping
+  epochs: 80                 # plafon; early-stopping biasanya berhenti lebih awal
+  patience: 12               # early stopping
   learning_rate: 1.0e-3
   weight_decay: 1.0e-4
   scheduler: "cosine"
   warmup_epochs: 3           # linear warmup sebelum cosine (0 = nonaktif)
   amp: true                  # automatic mixed precision
+  freeze_encoder_epochs: 3   # transfer-learning 2-tahap: encoder ImageNet beku N epoch awal
+  grad_clip: 1.0             # gradient clipping (norm); 0 = nonaktif
+  resume: true               # lanjut dari checkpoint bila sesi Colab mati
+  use_weighted_sampler: true # oversample patch berisi kelas langka (Sawit/Tambang/Permukiman)
   loss:
     # type: focal_tversky | ce_dice | ce_dice_lovasz | tversky | focal | lovasz
     type: "focal_tversky"    # default berbasis literatur class-imbalance
@@ -103,11 +107,12 @@ inference:
 change_detection:
   source_class: 1            # Hutan
   min_area_ha: 0.5           # buang polygon < 0.5 ha (noise)
-  target_classes:            # 4 jenis transisi (PRD §A.5 Cell 9)
+  target_classes:            # 5 jenis transisi (dari Hutan)
     2: "hutan_ke_lahan_terbuka"
     3: "hutan_ke_sawit"
     4: "hutan_ke_pertanian_lain"
     5: "hutan_ke_tambang"
+    6: "hutan_ke_permukiman"
 
 # Outputs (7 file kontrak — PRD §B.1)
 outputs:

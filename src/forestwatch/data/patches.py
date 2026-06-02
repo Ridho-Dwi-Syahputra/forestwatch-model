@@ -10,6 +10,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+from forestwatch.constants import N_CLASSES
 from forestwatch.utils.io import save_npz
 from forestwatch.utils.logging import get_logger
 
@@ -124,7 +125,7 @@ def list_patches(patch_dir: str | os.PathLike[str]) -> list[Path]:
 def compute_class_distribution(
     patch_dir: str | os.PathLike[str],
     *,
-    n_classes: int = 6,
+    n_classes: int = N_CLASSES,
     sample_limit: int | None = None,
 ) -> dict[int, int]:
     """Hitung distribusi kelas (pixel count) dari semua patch label.

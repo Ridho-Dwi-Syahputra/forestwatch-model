@@ -31,7 +31,7 @@ def test_dot_access():
 def test_classes_yaml_loads():
     classes = load_classes()
     assert "classes" in classes
-    assert len(classes["classes"]) == 6
+    assert len(classes["classes"]) == 7
     assert classes["classes"][1]["name"] == "Hutan"
 
 

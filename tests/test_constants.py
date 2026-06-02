@@ -22,7 +22,7 @@ from forestwatch.constants import (
 
 
 def test_class_count_consistent():
-    assert N_CLASSES == 6
+    assert N_CLASSES == 7
     assert len(CLASS_IDS) == N_CLASSES
     assert len(CLASS_NAMES) == N_CLASSES
     assert len(CLASS_NAMES_EN) == N_CLASSES
@@ -58,9 +58,9 @@ def test_bands_correct():
 
 
 def test_transition_map():
-    assert len(TRANSITION_MAP) == 4
-    # Semua target adalah salah satu dari kelas {2, 3, 4, 5}
-    assert set(TRANSITION_MAP.keys()) == {2, 3, 4, 5}
+    assert len(TRANSITION_MAP) == 5
+    # Semua target adalah salah satu dari kelas {2, 3, 4, 5, 6}
+    assert set(TRANSITION_MAP.keys()) == {2, 3, 4, 5, 6}
     # Nama transisi snake_case dimulai "hutan_ke_"
     for tname in TRANSITION_MAP.values():
         assert tname.startswith("hutan_ke_")

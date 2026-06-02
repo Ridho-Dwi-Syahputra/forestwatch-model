@@ -65,7 +65,7 @@ def test_build_statistics_json_full_schema(tmp_path, sample_feature_collection, 
     assert loaded["period_to"] == 2024
     assert loaded["n_hotspots"] == 5
     assert loaded["model_metrics"]["mean_iou"] == 0.71
-    assert len(loaded["model_metrics"]["per_class"]) == 6
+    assert len(loaded["model_metrics"]["per_class"]) == 7
 
 
 def test_build_statistics_json_default_metrics(sample_feature_collection):
