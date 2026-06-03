@@ -177,7 +177,7 @@ def sample_metrics():
         "per_class": [
             {"class": "Perairan", "iou": 0.91, "f1": 0.95},
             {"class": "Hutan", "iou": 0.94, "f1": 0.97},
-            {"class": "Deforestasi", "iou": 0.66, "f1": 0.79},
+            {"class": "Lahan Terbuka", "iou": 0.66, "f1": 0.79},
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
             {"class": "Tambang", "iou": 0.55, "f1": 0.71},

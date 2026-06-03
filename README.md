@@ -100,24 +100,28 @@ Mengikuti [docs/model/MASTER_PLAN.md](../docs/model/MASTER_PLAN.md):
 | --- | --- | --- |
 | 0 | Perairan | #2A6FDB (biru) |
 | 1 | Hutan | #0B3D0B (hijau gelap) |
-| 2 | Deforestasi / Lahan Terbuka | #E03B24 (merah) |
+| 2 | Lahan Terbuka | #E03B24 (merah) |
 | 3 | Sawit | #F97316 (oranye) |
 | 4 | Pertanian Lain | #E9C46A (kuning) |
-| 5 | Lahan Terbakar | #6D4C41 (coklat) |
+| 5 | Tambang | #8E24AA (ungu) |
+| 6 | Permukiman | #757575 (abu-abu) |
 
-## 4 Jenis Transisi (Deteksi Perubahan)
+> Kelas 2 **Lahan Terbuka** = kondisi fisik statis (lahan gundul/baru dibuka). **"Deforestasi" adalah PERISTIWA** perubahan (Hutan → kelas lain) yang dihitung pada deteksi perubahan, bukan kelas ini.
 
-- `hutan_ke_lahan_terbuka` — pembukaan hutan langsung
-- `hutan_ke_sawit` — ekspansi perkebunan sawit
-- `hutan_ke_pertanian_lain` — pembukaan untuk pertanian non-sawit (food estate, ladang)
-- `hutan_ke_terbakar` — kebakaran hutan
+## 5 Jenis Transisi Deforestasi (Deteksi Perubahan)
+
+- `hutan_ke_lahan_terbuka` — pembukaan hutan menjadi lahan terbuka/gundul
+- `hutan_ke_sawit` — ekspansi perkebunan kelapa sawit
+- `hutan_ke_pertanian_lain` — pembukaan untuk pertanian/ladang non-sawit
+- `hutan_ke_tambang` — konversi untuk pertambangan
+- `hutan_ke_permukiman` — konversi untuk kawasan permukiman/terbangun
 
 ## Stack Teknologi
 
 - **Citra**: Sentinel-2 SR Harmonized (6 band: B2, B3, B4, B8, B11, B12)
-- **Label sources**: ESA WorldCover v200, Dynamic World V1, Hansen GFC 2024 v1.12, BIOPAMA Oil Palm v1
+- **Label sources**: Dynamic World V1 (peta dasar, remap 9→7), ESA WorldCover v200/2021 (cross-check), Hansen GFC 2025 v1.13 (Lahan Terbuka), FDP Palm Probability 2025a (Sawit), Global Mining Footprint union Tang & Werner 2023 + Maus 2022 (Tambang)
 - **Model**: ResNet50-U-Net (segmentation-models-pytorch), opsi upgrade Attention U-Net (`unet_scse`)
-- **Loss**: 0.6 × CrossEntropy(weighted) + 0.4 × DiceLoss
+- **Loss**: Focal-Tversky (default) — α=0.3, β=0.7; class weights median-frequency + WeightedRandomSampler
 - **Optimizer**: AdamW (lr=1e-3, wd=1e-4) + CosineAnnealingLR
 - **Compute**: Google Earth Engine (preprocessing), Google Colab T4 (training)
 - **Format output**: GeoJSON, PNG, JSON, ONNX

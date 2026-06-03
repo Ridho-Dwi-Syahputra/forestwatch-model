@@ -38,7 +38,7 @@ def test_build_statistics_json_full_schema(tmp_path, sample_feature_collection, 
         per_class_area_ha={
             "Perairan": 100.0,
             "Hutan": 1_000_000.0,
-            "Deforestasi": 5000.0,
+            "Lahan Terbuka": 5000.0,
             "Sawit": 2500.0,
             "Pertanian Lain": 3000.0,
             "Tambang": 50.0,

@@ -115,13 +115,13 @@ def test_hansen_loss_overrides_base():
         is_mining=_z(dw.shape),
         is_palm=_z(dw.shape),
     )
-    assert np.all(label[0:2, :] == 2)  # Deforestasi
+    assert np.all(label[0:2, :] == 2)  # Lahan Terbuka (kelas 2)
     assert np.all(label[2:, :] == 1)   # Hutan
 
 
 def test_mining_overrides_everything():
     dw = np.full((3, 3), 1, dtype=np.uint8)
-    hansen = np.ones((3, 3), dtype=np.uint8)  # deforestasi di mana-mana
+    hansen = np.ones((3, 3), dtype=np.uint8)  # hansen loss di mana-mana
     mining = _z((3, 3))
     mining[1, 1] = 1
     label = apply_label_fusion_numpy(
@@ -131,7 +131,7 @@ def test_mining_overrides_everything():
         is_palm=_z((3, 3)),
     )
     assert label[1, 1] == 5      # Tambang menimpa
-    assert label[0, 0] == 2      # sekeliling tetap Deforestasi
+    assert label[0, 0] == 2      # sekeliling tetap Lahan Terbuka
 
 
 def test_palm_applied_last_overrides_all():

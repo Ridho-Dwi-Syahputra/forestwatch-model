@@ -16,7 +16,7 @@ CLASS_IDS: tuple[int, ...] = (0, 1, 2, 3, 4, 5, 6)
 CLASS_NAMES: tuple[str, ...] = (
     "Perairan",
     "Hutan",
-    "Deforestasi",
+    "Lahan Terbuka",
     "Sawit",
     "Pertanian Lain",
     "Tambang",
@@ -26,7 +26,7 @@ CLASS_NAMES: tuple[str, ...] = (
 CLASS_NAMES_EN: tuple[str, ...] = (
     "Water",
     "Forest",
-    "Deforestation/Bare",
+    "Open/Bare Land",
     "Oil Palm",
     "Other Agriculture",
     "Mining",
@@ -37,7 +37,7 @@ CLASS_NAMES_EN: tuple[str, ...] = (
 PALETTE_RGB: dict[int, tuple[int, int, int]] = {
     0: (42, 111, 219),   # Perairan      — biru
     1: (11, 61, 11),     # Hutan          — hijau gelap
-    2: (224, 59, 36),    # Deforestasi    — merah
+    2: (224, 59, 36),    # Lahan Terbuka  — merah
     3: (249, 115, 22),   # Sawit          — oranye
     4: (233, 196, 106),  # Pertanian Lain — kuning
     5: (142, 36, 170),   # Tambang        — ungu
@@ -168,8 +168,8 @@ DW_TO_CLASS: dict[int, int] = {
     4: 4,  # Crops           → Pertanian Lain
     5: 4,  # Shrub/Scrub     → Pertanian Lain (vegetasi non-hutan)
     6: 6,  # Built           → Permukiman (lahan terbangun)
-    7: 2,  # Bare            → Deforestasi/Lahan Terbuka
-    8: 2,  # Snow/Ice        → Deforestasi/Lahan Terbuka (Puncak Jaya, sangat kecil)
+    7: 2,  # Bare            → Lahan Terbuka
+    8: 2,  # Snow/Ice        → Lahan Terbuka (Puncak Jaya, sangat kecil)
 }
 
 # ============================================================================

@@ -19,12 +19,12 @@ classes:
     description: "Hutan alami (primer dan sekunder digabung)"
 
   - id: 2
-    name: "Deforestasi"
-    name_en: "Deforestation/Bare"
+    name: "Lahan Terbuka"
+    name_en: "Open/Bare Land"
     color: "#E03B24"
     rgb: [224, 59, 36]
     weight: 2.0
-    description: "Area yang dulunya hutan, kini gundul atau terdegradasi"
+    description: "Lahan gundul/terbuka: bekas hutan yang baru dibuka (Hansen lossyear>=2019) atau tanah terbuka. Catatan: 'deforestasi' sebagai PERISTIWA dilaporkan di deteksi perubahan (transisi Hutan->X), bukan kelas statis ini."
 
   - id: 3
     name: "Sawit"

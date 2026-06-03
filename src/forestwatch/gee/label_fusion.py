@@ -14,7 +14,9 @@ Papua yang ~75–85% hutan). Lihat catatan EDA di notebook.
     2. (opsional) Perkuat Hutan dgn ESA WorldCover via UNION — hanya MENAMBAH
        hutan, tidak pernah menjatuhkannya ke kelas lain.
     3. Overlay tematik (urutan menimpa):
-         a. Hansen lossyear ≥ threshold (setelah erosi 1 piksel) → 2 Deforestasi
+         a. Hansen lossyear ≥ threshold (setelah erosi 1 piksel) → 2 Lahan Terbuka
+            (piksel hutan yang baru hilang/terbuka; "deforestasi" sbg PERISTIWA
+            dihitung terpisah di deteksi perubahan)
          b. Poligon Tambang (union Tang & Werner 2023 + Maus 2022) → 5 Tambang
          c. Sawit (FDP Palm Probability ≥ ambang)              → 3 Sawit (TERAKHIR)
 
@@ -89,7 +91,7 @@ def build_label(
         is_extra_forest = esa.eq(10).And(dw.eq(1).Or(dw.eq(2)).Or(dw.eq(5)))
         label = label.where(is_extra_forest, 1)
 
-    # ---- 3a. Hansen deforestasi (MENIMPA) ----
+    # ---- 3a. Hansen loss → Lahan Terbuka kelas 2 (MENIMPA) ----
     hansen = ee.Image(GEE_ASSETS["hansen_gfc"])
     defo_mask = hansen.select("lossyear").gte(hansen_loss_year_min)
     defo_eroded = defo_mask.focal_min(radius=hansen_erosion_pixels, units="pixels")
@@ -138,7 +140,7 @@ def apply_label_fusion_numpy(
 
     Args:
         dw: ndarray label Dynamic World (nilai 0..8; Built=6 → Permukiman).
-        hansen_loss_eroded: ndarray boolean — piksel Deforestasi (Hansen).
+        hansen_loss_eroded: ndarray boolean — piksel Lahan Terbuka dari Hansen loss.
         is_mining: ndarray boolean — piksel Tambang (poligon mining).
         is_palm: ndarray boolean — piksel Sawit (FDP palm ≥ ambang).
         esa: (opsional) ndarray ESA WorldCover untuk UNION Hutan.
@@ -160,7 +162,7 @@ def apply_label_fusion_numpy(
         esa = np.asarray(esa)
         label[(esa == 10) & np.isin(dw, [1, 2, 5])] = 1
 
-    label[np.asarray(hansen_loss_eroded).astype(bool)] = 2  # MENIMPA: Deforestasi
+    label[np.asarray(hansen_loss_eroded).astype(bool)] = 2  # MENIMPA: Lahan Terbuka (kelas 2)
     label[np.asarray(is_mining).astype(bool)] = 5           # MENIMPA: Tambang
     label[np.asarray(is_palm).astype(bool)] = 3             # TERAKHIR: Sawit
 

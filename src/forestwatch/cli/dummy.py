@@ -106,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         "per_class": [
             {"class": "Perairan", "iou": 0.91, "f1": 0.95},
             {"class": "Hutan", "iou": 0.94, "f1": 0.97},
-            {"class": "Deforestasi", "iou": 0.66, "f1": 0.79},
+            {"class": "Lahan Terbuka", "iou": 0.66, "f1": 0.79},
             {"class": "Sawit", "iou": 0.62, "f1": 0.76},
             {"class": "Pertanian Lain", "iou": 0.71, "f1": 0.83},
             {"class": "Tambang", "iou": 0.55, "f1": 0.71},
@@ -175,7 +175,7 @@ def _make_dummy_landcover(size: int, rng: "Any") -> "Any":
     # Tabur patch sederhana dengan jumlah piksel kira-kira proporsional
     n_blobs_per_class = {
         0: 6,    # Perairan
-        2: 25,   # Deforestasi
+        2: 25,   # Lahan Terbuka
         3: 12,   # Sawit
         4: 30,   # Pertanian Lain
         5: 4,    # Tambang

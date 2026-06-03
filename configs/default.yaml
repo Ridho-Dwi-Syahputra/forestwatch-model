@@ -30,7 +30,7 @@ sentinel2:
 label_fusion:
   dw_base: true              # Dynamic World (remap 9->6) jadi peta dasar
   esa_forest_union: false    # true = perkuat Hutan dgn ESA (UNION, hanya menambah)
-  hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19) -> Deforestasi
+  hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19) -> Lahan Terbuka (kelas 2)
   hansen_erosion_pixels: 1   # morphological erosion radius
   palm_prob_threshold: 0.5   # FDP Palm Probability >= ambang -> Sawit (kelas 3)
   # Kelas 5 Tambang dari poligon Global Mining Footprint (Tang & Werner 2023)

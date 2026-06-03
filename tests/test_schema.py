@@ -20,7 +20,7 @@ def test_legend_valid():
     legend = [
         {"id": 0, "name": "Perairan", "color": "#2A6FDB"},
         {"id": 1, "name": "Hutan", "color": "#0B3D0B"},
-        {"id": 2, "name": "Deforestasi", "color": "#E03B24"},
+        {"id": 2, "name": "Lahan Terbuka", "color": "#E03B24"},
         {"id": 3, "name": "Sawit", "color": "#F97316"},
         {"id": 4, "name": "Pertanian Lain", "color": "#E9C46A"},
         {"id": 5, "name": "Tambang", "color": "#8E24AA"},
