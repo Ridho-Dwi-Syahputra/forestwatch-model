@@ -147,6 +147,10 @@ GEE_ASSETS: dict[str, str] = {
     # Tang & Werner (2023) Global Mining Footprint — FeatureCollection poligon
     # tambang (pit, tailing, dll), didelineasi dari Sentinel-2. CC BY-4.0.
     "mining": "projects/sat-io/open-datasets/global-mining/global_mining_footprints",
+    # Maus dkk. (2022) global mining polygons — DIGABUNG (union) dengan Tang &
+    # Werner untuk melengkapi cakupan footprint tambang di Papua (+~38% area).
+    # Tetap "footprint nyata" (bukan konsesi), jadi tak ada hutan tercap tambang.
+    "mining_maus": "projects/sat-io/open-datasets/global-mining/global_mining_polygons",
 }
 
 # ============================================================================

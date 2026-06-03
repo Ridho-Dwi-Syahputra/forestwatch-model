@@ -15,7 +15,7 @@ Papua yang ~75–85% hutan). Lihat catatan EDA di notebook.
        hutan, tidak pernah menjatuhkannya ke kelas lain.
     3. Overlay tematik (urutan menimpa):
          a. Hansen lossyear ≥ threshold (setelah erosi 1 piksel) → 2 Deforestasi
-         b. Poligon Tambang (Tang & Werner 2023)               → 5 Tambang
+         b. Poligon Tambang (union Tang & Werner 2023 + Maus 2022) → 5 Tambang
          c. Sawit (FDP Palm Probability ≥ ambang)              → 3 Sawit (TERAKHIR)
 
 Dynamic World adalah produk LULC konsensus near-real-time (Brown dkk. 2022) yang
@@ -95,8 +95,12 @@ def build_label(
     defo_eroded = defo_mask.focal_min(radius=hansen_erosion_pixels, units="pixels")
     label = label.where(defo_eroded, 2)
 
-    # ---- 3b. Tambang: rasterisasi poligon Global Mining Footprint (MENIMPA) ----
-    mining_fc = ee.FeatureCollection(GEE_ASSETS["mining"]).filterBounds(region)
+    # ---- 3b. Tambang: union footprint Tang & Werner + Maus dkk. (MENIMPA) ----
+    # Dua dataset footprint komplementer digabung agar cakupan tambang Papua lebih
+    # lengkap (Tang & Werner ~4 rb ha + Maus ~4,5 rb ha → union ~5,6 rb ha).
+    mining_tw = ee.FeatureCollection(GEE_ASSETS["mining"]).filterBounds(region)
+    mining_maus = ee.FeatureCollection(GEE_ASSETS["mining_maus"]).filterBounds(region)
+    mining_fc = mining_tw.merge(mining_maus)
     is_mining = ee.Image().byte().paint(mining_fc, 1).unmask(0)
     label = label.where(is_mining, 5)
 
