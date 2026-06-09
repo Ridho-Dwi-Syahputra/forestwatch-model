@@ -1,0 +1,71 @@
+"""ForestWatch Papua — Backend FastAPI.
+
+Menserve 7 file kontrak (PRD §B.1) sebagai REST API untuk frontend WebGIS.
+Tidak melakukan inferensi model — hanya membaca pre-computed products dari Orang 1.
+
+Jalankan:
+    uvicorn app.main:app --reload
+
+Docs:
+    http://localhost:8000/docs
+"""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.core.config import CORS_ORIGINS, STATIC_DIR
+from app.routers import deforestation, download, health, landcover, legend, statistics
+
+app = FastAPI(
+    title="ForestWatch Papua API",
+    description=(
+        "REST API untuk dashboard WebGIS deteksi deforestasi Papua. "
+        "Data bersumber dari model ResNet50-U-Net trained on Sentinel-2."
+    ),
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# CORS — izinkan frontend React (localhost dev + URL produksi)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+# Serve PNG landcover via /static/
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Register semua router di bawah prefix /api
+PREFIX = "/api"
+app.include_router(health.router,        prefix=PREFIX, tags=["Health"])
+app.include_router(legend.router,        prefix=PREFIX, tags=["Legend"])
+app.include_router(landcover.router,     prefix=PREFIX, tags=["Landcover"])
+app.include_router(deforestation.router, prefix=PREFIX, tags=["Deforestation"])
+app.include_router(statistics.router,    prefix=PREFIX, tags=["Statistics"])
+app.include_router(download.router,      prefix=PREFIX, tags=["Download"])
+
+
+@app.get("/", tags=["Root"])
+def root():
+    return {
+        "message": "ForestWatch Papua API",
+        "docs": "/docs",
+        "health": "/api/health",
+        "endpoints": [
+            "GET /api/health",
+            "GET /api/legend",
+            "GET /api/landcover/{year}",
+            "GET /api/deforestation",
+            "GET /api/statistics",
+            "GET /api/statistics/per-province",
+            "GET /api/statistics/per-transition",
+            "GET /api/statistics/summary",
+            "GET /api/download/{file_type}",
+            "GET /api/download/deforestation/csv",
+        ],
+    }

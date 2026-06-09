@@ -1,0 +1,257 @@
+=== BAGIAN 9 ===
+N_TILES = 144
+ok, ocean, partial, missing = [], [], [], []
+for ti in range(N_TILES):
+    d = PATCH_DIR / f"tile_{ti:03d}"
+    if not d.exists():
+        missing.append(ti); continue
+    n = len(list(d.glob('p*.npz')))
+    dn = None
+    if (d/'_DONE').exists():
+        try: dn = int((d/'_DONE').read_text().strip())
+        except: dn = None
+    if dn is not None and dn == n:
+        (ocean if n == 0 else ok).append(ti)
+    else:
+        partial.append((f"tile_{ti:03d}", n, dn))
+print(f"Berisi data : {len(ok)}")
+print(f"Laut (0)    : {len(ocean)} → {ocean}")
+print(f"Partial     : {len(partial)} → {partial}")
+print(f"Belum ada   : {len(missing)}")
+print(f"SELESAI     : {len(ok)+len(ocean)} / {N_TILES}")
+
+---
+# ── Cell 4b-1: DETEKSI korup vs laut (TARGETED — cuma cek tile anomali) ──────
+# Kunci kecepatan: jumlah patch dihitung dari folder (INSTAN, tanpa baca GeoTIFF).
+# File GeoTIFF cuma dibaca penuh untuk SUSPECT (patch < 50% normal) — segelintir saja.
+import numpy as np
+import rasterio
+
+tile_files = sorted(TILES_T2.glob("*.tif"))
+EXPECTED = {0: 2401, 1: 1568, 2: 1127, 3: 736}
+
+# 1. Cari suspect dari jumlah patch (INSTAN, tidak baca GeoTIFF) ─────────────
+suspects = []
+for ti in range(len(tile_files)):
+    d = PATCH_DIR / f"tile_{ti:03d}"
+    n = len(list(d.glob("p*.npz"))) if d.exists() else 0
+    if n < EXPECTED[ti % 4] * 0.5:          # < 50% normal = anomali berat
+        suspects.append((ti, n, EXPECTED[ti % 4]))
+
+print(f"Suspect (patch < 50% normal): {[(s[0], s[1]) for s in suspects]}\n")
+
+# 2. Verifikasi HANYA suspect: baca penuh band 1 → korup (error) atau laut (NaN) ─
+corrupt_subtiles, ocean_subtiles, low_subtiles = [], [], []
+for ti, n, exp in suspects:
+    f = tile_files[ti]
+    try:
+        with rasterio.open(f) as src:
+            band = src.read(1)               # baca penuh → error kalau blok korup
+            nan_ratio = float(np.isnan(band).mean())
+        if nan_ratio > 0.95:
+            ocean_subtiles.append(ti)
+            print(f"tile_{ti:03d}: LAUT 🌊   {n}/{exp} patch, {nan_ratio:.0%} NaN - biarkan")
+        else:
+            low_subtiles.append(ti)
+            print(f"tile_{ti:03d}: RENDAH ⚠️ {n}/{exp} patch, {nan_ratio:.0%} NaN - cek manual")
+    except Exception as e:
+        corrupt_subtiles.append(ti)
+        print(f"tile_{ti:03d}: KORUP ❌  {n}/{exp} patch - {str(e)[:50]}")
+
+print("\n" + "=" * 55)
+print(f"KORUP (re-export) : {corrupt_subtiles}")
+print(f"LAUT  (biarkan)   : {ocean_subtiles}")
+print(f"RENDAH (cek)      : {low_subtiles}")
+corrupt_original = sorted(set(ti // 4 for ti in corrupt_subtiles))
+print(f"\nOriginal tile GEE perlu re-export: {corrupt_original}")
+---
+# ── Cell 4b-2: RE-EXPORT tile korup + hapus file lama + reset _DONE ──────────
+# Jalankan SETELAH cell deteksi (butuh variabel corrupt_original & corrupt_subtiles).
+import shutil
+import ee
+from forestwatch.gee.auth import init_ee
+from forestwatch.gee.composite import s2_composite
+from forestwatch.gee.label_fusion import build_label
+from forestwatch.gee.tiles import make_tiles
+from forestwatch.gee.export import export_stack
+from forestwatch.constants import PAPUA_BBOX
+
+if not corrupt_original:
+    print("Tidak ada tile korup. Tidak perlu re-export. Lanjut ke distribusi kelas.")
+else:
+    print(f"Akan re-export {len(corrupt_original)} original tile: {corrupt_original}\n")
+
+    # 1. Auth + rebuild stack (sama persis Bagian 2)
+    init_ee(project="forestwatch-papua-unand")
+    papua = ee.Geometry.Rectangle(list(PAPUA_BBOX))
+    img_t2 = s2_composite(cfg['periods']['t2'], papua)
+    label  = build_label(papua, cfg['periods']['t2'])
+    stack_t2 = img_t2.addBands(label.toFloat())
+    tiles = make_tiles(papua, nx=cfg['export']['tiles_nx'], ny=cfg['export']['tiles_ny'])
+
+    tasks = []
+    for oti in corrupt_original:
+        # 2. Hapus SEMUA file lama original tile ini di Drive (yang korup)
+        old_files = list(TILES_T2.glob(f"papua_t2_tile_{oti:02d}-*.tif")) + \
+                    list(TILES_T2.glob(f"papua_t2_tile_{oti:02d}.tif"))
+        for of in old_files:
+            of.unlink()
+            print(f"  hapus file lama: {of.name}")
+
+        # 3. Re-export tile ini (nama prefix sama → split otomatis oleh GEE)
+        task = export_stack(
+            stack_t2,
+            description=f'papua_t2_tile_{oti:02d}',
+            folder=TILES_T2.name,
+            region=tiles[oti],
+            scale=cfg['sentinel2']['scale'],
+            max_pixels=int(cfg['export']['max_pixels']),
+        )
+        tasks.append(task)
+        print(f"  -> re-export tile_{oti:02d} dimulai\n")
+
+    # 4. Hapus folder patch + _DONE untuk sub-tile korup (biar di-cut ulang)
+    for ti in corrupt_subtiles:
+        d = PATCH_DIR / f"tile_{ti:03d}"
+        if d.exists():
+            shutil.rmtree(d, ignore_errors=True)
+            print(f"  reset patch folder: tile_{ti:03d} (akan di-cut ulang)")
+
+    print("\n" + "=" * 55)
+    print(f"{len(tasks)} task re-export dimulai. Pantau di:")
+    print("  https://code.earthengine.google.com/tasks")
+    print("\nSetelah SEMUA task selesai (~15-30 menit):")
+    print("  1. Jalankan ULANG Step 3 (cut patches) -> sub-tile korup di-cut ulang")
+    print("  2. Jalankan cell AUDIT -> pastikan 144/144 komplit")
+---
+# ── Cell 4b-3: Reset tile DARATAN yang ke-skip salah (_DONE=0 tapi ada data) ──
+# Contoh: tile_118 punya 53% daratan tapi 0 patch karena dulu di-skip manual.
+# Hapus folder+_DONE supaya Step 3 meng-cut-nya ulang dengan benar.
+# (Butuh variabel low_subtiles dari Cell 4c-1 deteksi.)
+import shutil
+
+reset = []
+for ti in low_subtiles:                       # low_subtiles = ada daratan (NaN < 95%)
+    d = PATCH_DIR / f"tile_{ti:03d}"
+    n = len(list(d.glob("p*.npz"))) if d.exists() else 0
+    if n == 0:                                 # ada daratan TAPI 0 patch = salah skip
+        shutil.rmtree(d, ignore_errors=True)
+        reset.append(ti)
+        print(f"tile_{ti:03d}: di-reset (daratan tapi 0 patch) -> akan di-cut ulang")
+
+if not reset:
+    print("Tidak ada tile daratan yang ke-skip salah. Aman.")
+else:
+    print(f"\nReset: {reset}. Sekarang jalankan ULANG Step 3, lalu Audit.")
+---
+
+=== CLASS WEIGHT ===
+Cell Index 35:
+# ── Distribusi kelas: load dari cache JSON di Drive, atau hitung (paralel) ───
+# Disimpan ke 'Satria Data 3.0/class_distribution.json' supaya tidak perlu
+# hitung ulang tiap sesi. EDA & training cukup load file ini.
+import json
+import numpy as np
+from concurrent.futures import ThreadPoolExecutor
+from tqdm.auto import tqdm
+from forestwatch.data.patches import list_patches
+from forestwatch.constants import CLASS_NAMES
+
+DIST_PATH = DRIVE_ROOT / 'class_distribution.json'   # langsung di folder Satria Data 3.0
+
+if DIST_PATH.exists():
+    raw = json.load(open(DIST_PATH))
+    dist = {int(k): int(v) for k, v in raw['counts'].items()}
+    print(f"Distribusi dimuat dari cache: {DIST_PATH}")
+    print(f"  (dihitung dari {raw.get('n_patches', '?')} patch)")
+else:
+    all_patches = list_patches(PATCH_DIR)
+    print(f"Cache belum ada. Menghitung dari {len(all_patches):,} patch (36 worker paralel)...")
+    counts = {c: 0 for c in range(7)}
+
+    def _read_lab(p):
+        return np.load(p)["lab"]
+
+    with ThreadPoolExecutor(max_workers=36) as exe:
+        for lab in tqdm(exe.map(_read_lab, all_patches),
+                        total=len(all_patches), desc="Counting classes"):
+            u, c = np.unique(lab, return_counts=True)
+            for cls, cnt in zip(u.tolist(), c.tolist()):
+                if 0 <= cls < 6:
+                    counts[cls] += int(cnt)
+    dist = counts
+
+    json.dump(
+        {'counts': {str(k): int(v) for k, v in dist.items()},
+         'n_patches': len(all_patches)},
+        open(DIST_PATH, 'w'), indent=2,
+    )
+    print(f"Distribusi disimpan ke: {DIST_PATH}")
+
+total = sum(dist.values())
+for cls in range(7):
+    cnt = dist.get(cls, 0)
+    pct = 100 * cnt / max(total, 1)
+    print(f'  Kelas {cls} ({CLASS_NAMES[cls]:<16}): {cnt:>14,} piksel ({pct:5.2f}%)')
+print(f'  Total                       : {total:>14,} piksel')
+
+freqs = np.array([dist[c] / total for c in range(7)])
+suggested = 1.0 / np.sqrt(freqs + 1e-9)
+suggested = suggested / suggested.mean()
+print('\nSuggested class_weights (1/sqrt(freq), normalized):', np.round(suggested, 2).tolist())
+
+---
+Cell Index 40:
+# === Setup training: model + loss + class weights + dataloaders (weighted sampler) ===
+import json
+from forestwatch.constants import N_CLASSES, CLASS_NAMES
+from forestwatch.data.dataset import build_dataloaders
+from forestwatch.model.architecture import build_unet, count_parameters
+from forestwatch.model.losses import make_loss_fn
+from forestwatch.training.metrics import median_frequency_weights
+
+# dist dari cache JSON (tahan restart sesi)
+if 'dist' not in globals():
+    _raw = json.load(open(DRIVE_ROOT / 'class_distribution.json'))
+    dist = {int(k): int(v) for k, v in _raw['counts'].items()}
+
+# Class weights median-frequency dari distribusi NYATA (bukan statis).
+class_weights = (
+    median_frequency_weights(dist, n_classes=N_CLASSES)
+    if cfg['training'].get('use_class_weights', True) else None
+)
+print('Class weights (median-freq):', class_weights)
+
+# DataLoaders. Bila use_weighted_sampler → oversample patch kelas langka
+# (Sawit/Tambang/Permukiman). Bobot per-patch di-cache ke Drive (restart-safe).
+sampler_w = class_weights if cfg['training'].get('use_weighted_sampler', True) else None
+train_loader, val_loader, test_loader = build_dataloaders(
+    PATCH_DIR,
+    batch_size=cfg['training']['batch_size'],
+    num_workers=cfg['training']['num_workers'],
+    train_ratio=cfg['training']['split']['train_ratio'],
+    val_ratio=cfg['training']['split']['val_ratio'],
+    seed=cfg['project']['seed'],
+    augment_p=cfg['training']['augmentation'],
+    class_weights=sampler_w,
+    sampler_cache=(DRIVE_ROOT / 'patch_sampler_weights.json') if sampler_w is not None else None,
+)
+print(f'Split - Train: {len(train_loader.dataset)} | Val: {len(val_loader.dataset)} | Test: {len(test_loader.dataset)}')
+
+model = build_unet(
+    architecture=cfg['model']['architecture'],
+    encoder_name=cfg['model']['encoder_name'],
+    encoder_weights=cfg['model']['encoder_weights'],
+    in_channels=cfg['model']['in_channels'],
+    classes=cfg['model']['classes'],
+)
+print(f'Arsitektur: {cfg["model"]["architecture"]} | {N_CLASSES} kelas | Param trainable: {count_parameters(model):,}')
+
+lc = cfg['training']['loss']
+loss_fn = make_loss_fn(
+    loss_type=lc['type'], class_weights=class_weights,
+    tversky_alpha=lc.get('tversky_alpha', 0.3), tversky_beta=lc.get('tversky_beta', 0.7),
+    focal_gamma=lc.get('focal_gamma', 2.0),
+)
+print('Loss type:', lc['type'])
+---

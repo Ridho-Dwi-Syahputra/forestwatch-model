@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.png
+*.tif
+*.geojson
+*.onnx
+static/*
+!static/.gitkeep
+data/*
+!data/.gitkeep
+.pytest_cache/
