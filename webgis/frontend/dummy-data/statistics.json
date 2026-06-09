@@ -1,0 +1,155 @@
+{
+  "period_from": 2021,
+  "period_to": 2025,
+  "total_deforestation_ha": 181578.8,
+  "n_hotspots": 60,
+  "per_transition_ha": {
+    "hutan_ke_lahan_terbuka": 18466.1,
+    "hutan_ke_sawit": 79230.7,
+    "hutan_ke_pertanian_lain": 33749.2,
+    "hutan_ke_tambang": 16496.8,
+    "hutan_ke_permukiman": 33636.0
+  },
+  "per_province": [
+    {
+      "province": "Papua",
+      "deforestation_ha": 9823.4
+    },
+    {
+      "province": "Papua Selatan",
+      "deforestation_ha": 105777.9
+    },
+    {
+      "province": "Papua Tengah",
+      "deforestation_ha": 21298.6
+    },
+    {
+      "province": "Papua Pegunungan",
+      "deforestation_ha": 5379.6
+    },
+    {
+      "province": "Papua Barat",
+      "deforestation_ha": 9447.6
+    },
+    {
+      "province": "Papua Barat Daya",
+      "deforestation_ha": 29851.6
+    }
+  ],
+  "per_class_area_ha": {
+    "Perairan": 1032289.8,
+    "Hutan": 116377650.5,
+    "Lahan Terbuka": 6117936.0,
+    "Sawit": 4286029.5,
+    "Pertanian Lain": 7685058.3,
+    "Tambang": 1224955.9,
+    "Permukiman": 1271279.9
+  },
+  "model_metrics": {
+    "overall_accuracy": 0.86,
+    "mean_iou": 0.71,
+    "kappa": 0.7821,
+    "per_class": [
+      {
+        "class": "Perairan",
+        "iou": 0.91,
+        "f1": 0.95
+      },
+      {
+        "class": "Hutan",
+        "iou": 0.94,
+        "f1": 0.97
+      },
+      {
+        "class": "Lahan Terbuka",
+        "iou": 0.66,
+        "f1": 0.79
+      },
+      {
+        "class": "Sawit",
+        "iou": 0.62,
+        "f1": 0.76
+      },
+      {
+        "class": "Pertanian Lain",
+        "iou": 0.71,
+        "f1": 0.83
+      },
+      {
+        "class": "Tambang",
+        "iou": 0.55,
+        "f1": 0.71
+      },
+      {
+        "class": "Permukiman",
+        "iou": 0.58,
+        "f1": 0.73
+      }
+    ],
+    "confusion_matrix": [
+      [
+        992,
+        28,
+        38,
+        43,
+        24,
+        48,
+        8
+      ],
+      [
+        208,
+        4935,
+        24,
+        37,
+        9,
+        68,
+        243
+      ],
+      [
+        0,
+        5,
+        224,
+        3,
+        6,
+        6,
+        9
+      ],
+      [
+        5,
+        0,
+        11,
+        254,
+        2,
+        7,
+        10
+      ],
+      [
+        13,
+        3,
+        15,
+        4,
+        440,
+        15,
+        12
+      ],
+      [
+        2,
+        2,
+        0,
+        1,
+        1,
+        84,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        2,
+        0,
+        64
+      ]
+    ]
+  }
+}

@@ -1,0 +1,2352 @@
+{
+  "type": "FeatureCollection",
+  "name": "deforestation_2021_2025",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              135.3092922586968,
+              -8.947774103517212
+            ],
+            [
+              135.3232546512614,
+              -8.947774103517212
+            ],
+            [
+              135.3232546512614,
+              -8.933811710952575
+            ],
+            [
+              135.3092922586968,
+              -8.933811710952575
+            ],
+            [
+              135.3092922586968,
+              -8.947774103517212
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00000",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 240.2,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.93742675730064,
+              -8.6993619260394
+            ],
+            [
+              139.96871803951845,
+              -8.6993619260394
+            ],
+            [
+              139.96871803951845,
+              -8.668070643821602
+            ],
+            [
+              139.93742675730064,
+              -8.668070643821602
+            ],
+            [
+              139.93742675730064,
+              -8.6993619260394
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00001",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 1206.4,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.3371225276781,
+              -3.6822957896114814
+            ],
+            [
+              140.36170493790718,
+              -3.6822957896114814
+            ],
+            [
+              140.36170493790718,
+              -3.6577133793823884
+            ],
+            [
+              140.3371225276781,
+              -3.6577133793823884
+            ],
+            [
+              140.3371225276781,
+              -3.6822957896114814
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00002",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 744.55,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133.7824217311927,
+              -0.8501017897674383
+            ],
+            [
+              133.853948508965,
+              -0.8501017897674383
+            ],
+            [
+              133.853948508965,
+              -0.7785750119951242
+            ],
+            [
+              133.7824217311927,
+              -0.7785750119951242
+            ],
+            [
+              133.7824217311927,
+              -0.8501017897674383
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00003",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 6303.52,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.83510776837807,
+              -6.013468957333806
+            ],
+            [
+              137.87941465823695,
+              -6.013468957333806
+            ],
+            [
+              137.87941465823695,
+              -5.9691620674749055
+            ],
+            [
+              137.83510776837807,
+              -5.9691620674749055
+            ],
+            [
+              137.83510776837807,
+              -6.013468957333806
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00004",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 2418.74,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              134.85920209077025,
+              -3.202719122729346
+            ],
+            [
+              134.8822130520513,
+              -3.202719122729346
+            ],
+            [
+              134.8822130520513,
+              -3.1797081614482794
+            ],
+            [
+              134.85920209077025,
+              -3.1797081614482794
+            ],
+            [
+              134.85920209077025,
+              -3.202719122729346
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00005",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 652.4,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              138.4708362860458,
+              -4.429954400950312
+            ],
+            [
+              138.50744632644646,
+              -4.429954400950312
+            ],
+            [
+              138.50744632644646,
+              -4.393344360549673
+            ],
+            [
+              138.4708362860458,
+              -4.393344360549673
+            ],
+            [
+              138.4708362860458,
+              -4.429954400950312
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00006",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 1651.38,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.13746276138139,
+              -1.1126322776339588
+            ],
+            [
+              140.20936222830088,
+              -1.1126322776339588
+            ],
+            [
+              140.20936222830088,
+              -1.0407328107144835
+            ],
+            [
+              140.13746276138139,
+              -1.0407328107144835
+            ],
+            [
+              140.13746276138139,
+              -1.1126322776339588
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00007",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 6369.38,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133.37718561703159,
+              -1.3628067927627656
+            ],
+            [
+              133.40124723186486,
+              -1.3628067927627656
+            ],
+            [
+              133.40124723186486,
+              -1.3387451779295008
+            ],
+            [
+              133.37718561703159,
+              -1.3387451779295008
+            ],
+            [
+              133.37718561703159,
+              -1.3628067927627656
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00008",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 713.34,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              135.4926188778476,
+              -3.561547840002504
+            ],
+            [
+              135.5674939069598,
+              -3.561547840002504
+            ],
+            [
+              135.5674939069598,
+              -3.486672810890319
+            ],
+            [
+              135.4926188778476,
+              -3.486672810890319
+            ],
+            [
+              135.4926188778476,
+              -3.561547840002504
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00009",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 6907.49,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.75219063897217,
+              -7.620343460381312
+            ],
+            [
+              140.80563999662607,
+              -7.620343460381312
+            ],
+            [
+              140.80563999662607,
+              -7.56689410272743
+            ],
+            [
+              140.75219063897217,
+              -7.56689410272743
+            ],
+            [
+              140.75219063897217,
+              -7.620343460381312
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00010",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 3519.9,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.58650794111776,
+              -7.987757415901198
+            ],
+            [
+              137.60173251667965,
+              -7.987757415901198
+            ],
+            [
+              137.60173251667965,
+              -7.97253284033931
+            ],
+            [
+              137.58650794111776,
+              -7.97253284033931
+            ],
+            [
+              137.58650794111776,
+              -7.987757415901198
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00011",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 285.59,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              136.97920194238228,
+              -3.267943501367889
+            ],
+            [
+              137.04932311304302,
+              -3.267943501367889
+            ],
+            [
+              137.04932311304302,
+              -3.1978223307071665
+            ],
+            [
+              136.97920194238228,
+              -3.1978223307071665
+            ],
+            [
+              136.97920194238228,
+              -3.267943501367889
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00012",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 6058.21,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.57360365381794,
+              -8.32968415241565
+            ],
+            [
+              140.6218867332712,
+              -8.32968415241565
+            ],
+            [
+              140.6218867332712,
+              -8.28140107296237
+            ],
+            [
+              140.57360365381794,
+              -8.28140107296237
+            ],
+            [
+              140.57360365381794,
+              -8.32968415241565
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00013",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 2872.34,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.75242501313403,
+              -8.595106463979208
+            ],
+            [
+              140.77323788490287,
+              -8.595106463979208
+            ],
+            [
+              140.77323788490287,
+              -8.574293592210344
+            ],
+            [
+              140.75242501313403,
+              -8.574293592210344
+            ],
+            [
+              140.75242501313403,
+              -8.595106463979208
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00014",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 533.72,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              136.7490060436914,
+              -6.697577108549579
+            ],
+            [
+              136.7721107950848,
+              -6.697577108549579
+            ],
+            [
+              136.7721107950848,
+              -6.674472357156132
+            ],
+            [
+              136.7490060436914,
+              -6.674472357156132
+            ],
+            [
+              136.7490060436914,
+              -6.697577108549579
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00015",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 657.73,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.8401870826159,
+              -1.494204792915619
+            ],
+            [
+              137.86216284436523,
+              -1.494204792915619
+            ],
+            [
+              137.86216284436523,
+              -1.472229031166304
+            ],
+            [
+              137.8401870826159,
+              -1.472229031166304
+            ],
+            [
+              137.8401870826159,
+              -1.494204792915619
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00016",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 595.02,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Pegunungan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.33287957845258,
+              -8.303965487478498
+            ],
+            [
+              140.35593016060918,
+              -8.303965487478498
+            ],
+            [
+              140.35593016060918,
+              -8.280914905321916
+            ],
+            [
+              140.33287957845258,
+              -8.280914905321916
+            ],
+            [
+              140.33287957845258,
+              -8.303965487478498
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00017",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 654.65,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.05193073618702,
+              -3.929759049428583
+            ],
+            [
+              131.10134100806104,
+              -3.929759049428583
+            ],
+            [
+              131.10134100806104,
+              -3.8803487775545857
+            ],
+            [
+              131.05193073618702,
+              -3.8803487775545857
+            ],
+            [
+              131.05193073618702,
+              -3.929759049428583
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00018",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 3008.02,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.45397769019368,
+              -8.692449314095303
+            ],
+            [
+              140.53175933928358,
+              -8.692449314095303
+            ],
+            [
+              140.53175933928358,
+              -8.614667665005388
+            ],
+            [
+              140.45397769019368,
+              -8.614667665005388
+            ],
+            [
+              140.45397769019368,
+              -8.692449314095303
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00019",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 7454.19,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              138.424290994798,
+              -2.0916771165874852
+            ],
+            [
+              138.46962247609082,
+              -2.0916771165874852
+            ],
+            [
+              138.46962247609082,
+              -2.046345635294701
+            ],
+            [
+              138.424290994798,
+              -2.046345635294701
+            ],
+            [
+              138.424290994798,
+              -2.0916771165874852
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00020",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 2531.9,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              138.49470184702147,
+              -5.379100539013431
+            ],
+            [
+              138.5714307669395,
+              -5.379100539013431
+            ],
+            [
+              138.5714307669395,
+              -5.302371619095408
+            ],
+            [
+              138.49470184702147,
+              -5.302371619095408
+            ],
+            [
+              138.49470184702147,
+              -5.379100539013431
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00021",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 7253.78,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.8699800581097,
+              -8.408220622524
+            ],
+            [
+              140.92037730322093,
+              -8.408220622524
+            ],
+            [
+              140.92037730322093,
+              -8.35782337741278
+            ],
+            [
+              140.8699800581097,
+              -8.35782337741278
+            ],
+            [
+              140.8699800581097,
+              -8.408220622524
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00022",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 3129.39,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.42593019103842,
+              -2.4507378162029934
+            ],
+            [
+              131.49618891148796,
+              -2.4507378162029934
+            ],
+            [
+              131.49618891148796,
+              -2.3804790957534614
+            ],
+            [
+              131.42593019103842,
+              -2.3804790957534614
+            ],
+            [
+              131.42593019103842,
+              -2.4507378162029934
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00023",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 6082.0,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.71409311960954,
+              -8.943610773743345
+            ],
+            [
+              139.73368055078745,
+              -8.943610773743345
+            ],
+            [
+              139.73368055078745,
+              -8.92402334256543
+            ],
+            [
+              139.71409311960954,
+              -8.92402334256543
+            ],
+            [
+              139.71409311960954,
+              -8.943610773743345
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00024",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 472.72,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.2249401935625,
+              -8.562185997838744
+            ],
+            [
+              140.2896011876616,
+              -8.562185997838744
+            ],
+            [
+              140.2896011876616,
+              -8.497525003739655
+            ],
+            [
+              140.2249401935625,
+              -8.497525003739655
+            ],
+            [
+              140.2249401935625,
+              -8.562185997838744
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00025",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 5151.46,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.2831155532338,
+              -9.051803820352564
+            ],
+            [
+              140.32921796787514,
+              -9.051803820352564
+            ],
+            [
+              140.32921796787514,
+              -9.005701405711239
+            ],
+            [
+              140.2831155532338,
+              -9.005701405711239
+            ],
+            [
+              140.2831155532338,
+              -9.051803820352564
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00026",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 2618.75,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              135.5414131774081,
+              -0.6681431963964615
+            ],
+            [
+              135.6097820313797,
+              -0.6681431963964615
+            ],
+            [
+              135.6097820313797,
+              -0.5997743424248325
+            ],
+            [
+              135.5414131774081,
+              -0.5997743424248325
+            ],
+            [
+              135.5414131774081,
+              -0.6681431963964615
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00027",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 5759.21,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.40854446196155,
+              -8.33548862420281
+            ],
+            [
+              131.47565530550023,
+              -8.33548862420281
+            ],
+            [
+              131.47565530550023,
+              -8.268377780664114
+            ],
+            [
+              131.40854446196155,
+              -8.268377780664114
+            ],
+            [
+              131.40854446196155,
+              -8.33548862420281
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00028",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 5549.21,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.56406102221575,
+              -9.100340729214471
+            ],
+            [
+              140.63338423313672,
+              -9.100340729214471
+            ],
+            [
+              140.63338423313672,
+              -9.031017518293508
+            ],
+            [
+              140.56406102221575,
+              -9.031017518293508
+            ],
+            [
+              140.56406102221575,
+              -9.100340729214471
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00029",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 5921.11,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.06089206417158,
+              -8.663942256241773
+            ],
+            [
+              140.0876231163445,
+              -8.663942256241773
+            ],
+            [
+              140.0876231163445,
+              -8.63721120406885
+            ],
+            [
+              140.06089206417158,
+              -8.63721120406885
+            ],
+            [
+              140.06089206417158,
+              -8.663942256241773
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00030",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 880.4,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.7925201165404,
+              -0.008386945508909383
+            ],
+            [
+              131.8089787995185,
+              -0.008386945508909383
+            ],
+            [
+              131.8089787995185,
+              0.008071737469211405
+            ],
+            [
+              131.7925201165404,
+              0.008071737469211405
+            ],
+            [
+              131.7925201165404,
+              -0.008386945508909383
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00031",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 333.76,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Pegunungan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.09021546607795,
+              -8.511815884275823
+            ],
+            [
+              140.14434868701954,
+              -8.511815884275823
+            ],
+            [
+              140.14434868701954,
+              -8.457682663334225
+            ],
+            [
+              140.09021546607795,
+              -8.457682663334225
+            ],
+            [
+              140.09021546607795,
+              -8.511815884275823
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00032",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 3610.55,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.6297016724849,
+              -8.794822560637382
+            ],
+            [
+              140.67926836877095,
+              -8.794822560637382
+            ],
+            [
+              140.67926836877095,
+              -8.74525586435135
+            ],
+            [
+              140.6297016724849,
+              -8.74525586435135
+            ],
+            [
+              140.6297016724849,
+              -8.794822560637382
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00033",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 3027.09,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.65853048915005,
+              -7.966037490535158
+            ],
+            [
+              139.69213199246553,
+              -7.966037490535158
+            ],
+            [
+              139.69213199246553,
+              -7.932435987219688
+            ],
+            [
+              139.65853048915005,
+              -7.932435987219688
+            ],
+            [
+              139.65853048915005,
+              -7.966037490535158
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00034",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 1391.12,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.11129390816473,
+              -8.376306567884019
+            ],
+            [
+              140.1762538033081,
+              -8.376306567884019
+            ],
+            [
+              140.1762538033081,
+              -8.311346672740665
+            ],
+            [
+              140.11129390816473,
+              -8.311346672740665
+            ],
+            [
+              140.11129390816473,
+              -8.376306567884019
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00035",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 5199.2,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.4456875350487,
+              -8.510557985988944
+            ],
+            [
+              140.5172636817532,
+              -8.510557985988944
+            ],
+            [
+              140.5172636817532,
+              -8.438981839284425
+            ],
+            [
+              140.4456875350487,
+              -8.438981839284425
+            ],
+            [
+              140.4456875350487,
+              -8.510557985988944
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00036",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 6312.23,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133.1493173073762,
+              -3.9870130425769728
+            ],
+            [
+              133.1970742521867,
+              -3.9870130425769728
+            ],
+            [
+              133.1970742521867,
+              -3.9392560977664597
+            ],
+            [
+              133.1493173073762,
+              -3.9392560977664597
+            ],
+            [
+              133.1493173073762,
+              -3.9870130425769728
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00037",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 2810.08,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Pegunungan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.29425637048595,
+              -8.606398018320776
+            ],
+            [
+              140.37063327728887,
+              -8.606398018320776
+            ],
+            [
+              140.37063327728887,
+              -8.530021111517838
+            ],
+            [
+              140.29425637048595,
+              -8.530021111517838
+            ],
+            [
+              140.29425637048595,
+              -8.606398018320776
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00038",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 7187.37,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.12802620584918,
+              -5.144163359990664
+            ],
+            [
+              137.19699639130576,
+              -5.144163359990664
+            ],
+            [
+              137.19699639130576,
+              -5.0751931745340855
+            ],
+            [
+              137.12802620584918,
+              -5.0751931745340855
+            ],
+            [
+              137.12802620584918,
+              -5.144163359990664
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00039",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 5860.96,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133.02826647826515,
+              -3.2404526292147877
+            ],
+            [
+              133.06074537985376,
+              -3.2404526292147877
+            ],
+            [
+              133.06074537985376,
+              -3.2079737276261704
+            ],
+            [
+              133.02826647826515,
+              -3.2079737276261704
+            ],
+            [
+              133.02826647826515,
+              -3.2404526292147877
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00040",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 1299.72,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.93384797368557,
+              -8.513349692439862
+            ],
+            [
+              140.9466382495199,
+              -8.513349692439862
+            ],
+            [
+              140.9466382495199,
+              -8.500559416605507
+            ],
+            [
+              140.93384797368557,
+              -8.500559416605507
+            ],
+            [
+              140.93384797368557,
+              -8.513349692439862
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00041",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 201.56,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.97116046059696,
+              -9.234391381519734
+            ],
+            [
+              139.98453531853445,
+              -9.234391381519734
+            ],
+            [
+              139.98453531853445,
+              -9.22101652358223
+            ],
+            [
+              139.97116046059696,
+              -9.22101652358223
+            ],
+            [
+              139.97116046059696,
+              -9.234391381519734
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00042",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 220.41,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.55465145275562,
+              -8.341216703351485
+            ],
+            [
+              139.61378064335636,
+              -8.341216703351485
+            ],
+            [
+              139.61378064335636,
+              -8.282087512750724
+            ],
+            [
+              139.55465145275562,
+              -8.282087512750724
+            ],
+            [
+              139.55465145275562,
+              -8.341216703351485
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00043",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 4307.74,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.52583155429608,
+              -8.524735100441143
+            ],
+            [
+              140.54465524947358,
+              -8.524735100441143
+            ],
+            [
+              140.54465524947358,
+              -8.505911405263658
+            ],
+            [
+              140.52583155429608,
+              -8.505911405263658
+            ],
+            [
+              140.52583155429608,
+              -8.524735100441143
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00044",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 436.57,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              141.0687817938182,
+              -8.312143933301968
+            ],
+            [
+              141.1020620367659,
+              -8.312143933301968
+            ],
+            [
+              141.1020620367659,
+              -8.278863690354289
+            ],
+            [
+              141.0687817938182,
+              -8.278863690354289
+            ],
+            [
+              141.0687817938182,
+              -8.312143933301968
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00045",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 1364.64,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Tengah",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              137.46439663936818,
+              -3.21743495234392
+            ],
+            [
+              137.5355955911535,
+              -3.21743495234392
+            ],
+            [
+              137.5355955911535,
+              -3.1462360005586003
+            ],
+            [
+              137.46439663936818,
+              -3.1462360005586003
+            ],
+            [
+              137.46439663936818,
+              -3.21743495234392
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00046",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 6245.87,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133.12944544458526,
+              -2.1784711174961284
+            ],
+            [
+              133.15904432311083,
+              -2.1784711174961284
+            ],
+            [
+              133.15904432311083,
+              -2.1488722389705703
+            ],
+            [
+              133.12944544458526,
+              -2.1488722389705703
+            ],
+            [
+              133.12944544458526,
+              -2.1784711174961284
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00047",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 1079.43,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Pegunungan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.3406133174203,
+              -5.014377852625053
+            ],
+            [
+              131.40744320661807,
+              -5.014377852625053
+            ],
+            [
+              131.40744320661807,
+              -4.947547963427276
+            ],
+            [
+              131.3406133174203,
+              -4.947547963427276
+            ],
+            [
+              131.3406133174203,
+              -5.014377852625053
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00048",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 5502.85,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.5474339854545,
+              -8.233413656101174
+            ],
+            [
+              139.56257398243528,
+              -8.233413656101174
+            ],
+            [
+              139.56257398243528,
+              -8.218273659120356
+            ],
+            [
+              139.5474339854545,
+              -8.218273659120356
+            ],
+            [
+              139.5474339854545,
+              -8.233413656101174
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00049",
+        "transition_type": "hutan_ke_tambang",
+        "area_ha": 282.42,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "IUP / Konsesi Tambang"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.62196262558138,
+              -8.649272598084165
+            ],
+            [
+              140.66828391907939,
+              -8.649272598084165
+            ],
+            [
+              140.66828391907939,
+              -8.602951304586144
+            ],
+            [
+              140.62196262558138,
+              -8.602951304586144
+            ],
+            [
+              140.62196262558138,
+              -8.649272598084165
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00050",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 2643.67,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              134.65655241584645,
+              -3.8901004503192302
+            ],
+            [
+              134.72850538558177,
+              -3.8901004503192302
+            ],
+            [
+              134.72850538558177,
+              -3.818147480583904
+            ],
+            [
+              134.65655241584645,
+              -3.818147480583904
+            ],
+            [
+              134.65655241584645,
+              -3.8901004503192302
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00051",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 6378.86,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              134.1195296606435,
+              -5.07876233616438
+            ],
+            [
+              134.1855865162086,
+              -5.07876233616438
+            ],
+            [
+              134.1855865162086,
+              -5.012705480599302
+            ],
+            [
+              134.1195296606435,
+              -5.012705480599302
+            ],
+            [
+              134.1195296606435,
+              -5.07876233616438
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00052",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 5376.28,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat Daya",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.67429264339845,
+              -9.314496286365152
+            ],
+            [
+              140.69810386485474,
+              -9.314496286365152
+            ],
+            [
+              140.69810386485474,
+              -9.290685064908825
+            ],
+            [
+              140.67429264339845,
+              -9.290685064908825
+            ],
+            [
+              140.67429264339845,
+              -9.314496286365152
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00053",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 698.57,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.3073761547135,
+              -8.656641588858648
+            ],
+            [
+              140.35063381464124,
+              -8.656641588858648
+            ],
+            [
+              140.35063381464124,
+              -8.613383928930922
+            ],
+            [
+              140.3073761547135,
+              -8.613383928930922
+            ],
+            [
+              140.3073761547135,
+              -8.656641588858648
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00054",
+        "transition_type": "hutan_ke_pertanian_lain",
+        "area_ha": 2305.54,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "APL / Lahan Pertanian"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              131.95203064181328,
+              -8.216093833492693
+            ],
+            [
+              132.0274695463965,
+              -8.216093833492693
+            ],
+            [
+              132.0274695463965,
+              -8.14065492890947
+            ],
+            [
+              131.95203064181328,
+              -8.14065492890947
+            ],
+            [
+              131.95203064181328,
+              -8.216093833492693
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00055",
+        "transition_type": "hutan_ke_permukiman",
+        "area_ha": 7011.92,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Kawasan Permukiman / Terbangun"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.45933296225135,
+              -8.800396755986057
+            ],
+            [
+              140.47753092743008,
+              -8.800396755986057
+            ],
+            [
+              140.47753092743008,
+              -8.782198790807353
+            ],
+            [
+              140.45933296225135,
+              -8.782198790807353
+            ],
+            [
+              140.45933296225135,
+              -8.800396755986057
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00056",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 408.03,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              136.628669339339,
+              -6.312776849732469
+            ],
+            [
+              136.65001447876722,
+              -6.312776849732469
+            ],
+            [
+              136.65001447876722,
+              -6.291431710304241
+            ],
+            [
+              136.628669339339,
+              -6.291431710304241
+            ],
+            [
+              136.628669339339,
+              -6.312776849732469
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00057",
+        "transition_type": "hutan_ke_lahan_terbuka",
+        "area_ha": 561.36,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Pegunungan",
+        "kawasan_status": "Areal Penggunaan Lain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              135.90209004987173,
+              -2.060518619508815
+            ],
+            [
+              135.93190903822114,
+              -2.060518619508815
+            ],
+            [
+              135.93190903822114,
+              -2.0306996311593997
+            ],
+            [
+              135.90209004987173,
+              -2.0306996311593997
+            ],
+            [
+              135.90209004987173,
+              -2.060518619508815
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00058",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 1095.55,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Selatan",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.73035590998686,
+              -7.904906427324867
+            ],
+            [
+              140.74398068623466,
+              -7.904906427324867
+            ],
+            [
+              140.74398068623466,
+              -7.891281651077047
+            ],
+            [
+              140.73035590998686,
+              -7.891281651077047
+            ],
+            [
+              140.73035590998686,
+              -7.904906427324867
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "DF-00059",
+        "transition_type": "hutan_ke_sawit",
+        "area_ha": 228.72,
+        "period_from": 2021,
+        "period_to": 2025,
+        "province": "Papua Barat",
+        "kawasan_status": "HGU / Perkebunan"
+      }
+    }
+  ]
+}
