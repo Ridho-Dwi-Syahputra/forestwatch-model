@@ -43,6 +43,7 @@ def test_dw_trees_become_forest_without_esa():
 
 
 def test_dw_water_and_flooded_veg_become_perairan():
+    """Tanpa NDVI (ndvi=None): water + flooded veg → Perairan (perilaku default)."""
     dw = np.array([[0, 3, 0, 3]], dtype=np.uint8)  # water + flooded veg
     label = apply_label_fusion_numpy(
         dw=dw,
@@ -51,6 +52,52 @@ def test_dw_water_and_flooded_veg_become_perairan():
         is_palm=_z(dw.shape),
     )
     assert np.all(label == 0)
+
+
+def test_ndvi_healing_swamp_forest_to_hutan():
+    """Healing rawa: Perairan (0) ber-NDVI tinggi → Hutan (1); NDVI rendah tetap air."""
+    dw = np.array([[0, 3, 0, 3]], dtype=np.uint8)  # water + flooded veg
+    # kolom 0,1 = kanopi rawa (NDVI tinggi) → Hutan; kolom 2,3 = air murni → tetap 0
+    ndvi = np.array([[0.6, 0.45, 0.05, -0.1]], dtype=np.float32)
+    label = apply_label_fusion_numpy(
+        dw=dw,
+        hansen_loss_eroded=_z(dw.shape),
+        is_mining=_z(dw.shape),
+        is_palm=_z(dw.shape),
+        ndvi=ndvi,
+    )
+    np.testing.assert_array_equal(label, np.array([[1, 1, 0, 0]], dtype=np.uint8))
+
+
+def test_ndvi_healing_does_not_touch_nonwater():
+    """Healing hanya menyentuh Perairan (0); kelas lain dgn NDVI tinggi tak berubah."""
+    dw = np.array([[1, 4, 7]], dtype=np.uint8)  # trees, crops, bare
+    ndvi = np.array([[0.9, 0.9, 0.9]], dtype=np.float32)  # semua tinggi
+    label = apply_label_fusion_numpy(
+        dw=dw,
+        hansen_loss_eroded=_z(dw.shape),
+        is_mining=_z(dw.shape),
+        is_palm=_z(dw.shape),
+        ndvi=ndvi,
+    )
+    # Hutan tetap 1, crops→Pertanian Lain(4), bare→Lahan Terbuka(2) — tak di-heal.
+    np.testing.assert_array_equal(label, np.array([[1, 4, 2]], dtype=np.uint8))
+
+
+def test_ndvi_healing_then_mining_overlay_wins():
+    """Tailing pond: air healed? Tidak (NDVI rendah). Mining overlay tetap menimpa."""
+    dw = np.array([[0, 0]], dtype=np.uint8)  # dua piksel air
+    ndvi = np.array([[0.7, 0.05]], dtype=np.float32)  # kiri kanopi, kanan air keruh
+    mining = np.array([[0, 1]], dtype=np.uint8)  # kanan = footprint tambang
+    label = apply_label_fusion_numpy(
+        dw=dw,
+        hansen_loss_eroded=_z(dw.shape),
+        is_mining=mining,
+        is_palm=_z(dw.shape),
+        ndvi=ndvi,
+    )
+    # kiri: healed → Hutan(1); kanan: NDVI rendah tak healed, overlay mining → 5.
+    np.testing.assert_array_equal(label, np.array([[1, 5]], dtype=np.uint8))
 
 
 def test_dw_crops_grass_shrub_become_pertanian_lain():
