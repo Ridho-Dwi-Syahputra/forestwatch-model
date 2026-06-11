@@ -1,3 +1,5 @@
+> ℹ️ **CATATAN STATUS.** Prinsip umum dokumen ini (real-world prior, multi-region sourcing, mitigasi domain-shift) **masih jadi rujukan** — lihat [`RENCANA_EKSEKUSI_LANJUTAN.md`](RENCANA_EKSEKUSI_LANJUTAN.md) v8.0 §1.5. Namun beberapa detail teknis sudah **DIKOREKSI** (lihat catatan inline ⚠️/⛔ di bawah): lokasi tambang (§A.1), threshold patch cutting (§3.3), dan **alur penggabungan dataset (§3.4) — JANGAN diikuti apa adanya**, ikuti RENCANA TAHAP 1 (Bagian 12) & TAHAP 2 (Bagian 14) untuk menghindari kebocoran data transfer ke test set.
+
 # FUTURE BEST PLAN: Global Spatial Transfer Learning
 **Strategi Mengatasi Extreme Class Imbalance pada Model Pemantauan Hutan Papua**
 
@@ -17,6 +19,8 @@ Karena satelit Sentinel-2 mengambil spektrum cahaya yang sama di seluruh belahan
    - **Lokasi Ideal**: Pegunungan Andes (Peru/Chile) atau Kalimantan.
    - **Alasan**: Tambang emas/tembaga di Grasberg, Papua memiliki morfologi *open pit* berbatu abu-abu pucat di dataran tinggi. Mengambil data tambang tembaga dari Peru/Chile akan memberikan *Domain Match* yang sempurna. Data tambang batubara/emas dari Kalimantan bisa menambah keragaman (*variance*) bentuk galian tambang.
    - *(Catatan: Hindari eksklusivitas tambang Nikel Sulawesi (Morowali) yang berwarna laterit merah tua agar model tidak mengalami over-fitting pada warna tanah tertentu).*
+
+   > ⚠️ **Update RENCANA v8.0 (§1.1):** Morowali (Sulteng, nikel) justru **DIPAKAI** sebagai salah satu dari 3 region Tambang (bersama Kaltim + Kalsel) untuk variasi morfologi — bukan dihindari, tapi dimitigasi via augmentasi radiometrik ringan (selaras prinsip "jangan eksklusif 1 lokasi" di atas). Opsi Pegunungan Andes (Peru/Chile) **TIDAK diadopsi** — fokus region domestik Indonesia.
 
 2. **Permukiman (Built-up - Kelas 6)**
    - **Lokasi Ideal**: Pulau Jawa (Jabodetabek atau Surabaya).
@@ -47,9 +51,13 @@ Untuk mencegah ledakan data (menghindari mendownload jutaan piksel hutan/laut da
          np.savez_compressed(...)
      ```
 
+   > ⚠️ **Update RENCANA v8.0 (TAHAP 1, Bagian 12 §1.3):** threshold `> 0.05` (5%) di atas **DILONGGARKAN** menjadi `> 1–2%` (atau ambil semua patch dalam ROI inti) agar volume cukup mencapai target ~250 juta px/kelas.
+
 4. **Penggabungan Dataset (Dataset Merging)**
    - *Patch* `.npz` berkualitas tinggi yang lolos filter seleksi ini langsung dicampur ke dalam direktori utama `ForestWatch_Patches`.
    - Modul `compute_class_distribution` akan secara otomatis membaca penambahan data ini, menyesuaikan persentase, dan menormalkan kembali *class weights* sebelum proses *training*.
+
+   > ⛔ **KOREKSI KRITIS RENCANA v8.0 (TAHAP 1 §1.3 & TAHAP 2):** JANGAN langsung mencampur ke `ForestWatch_Patches`. Simpan ke folder **terpisah** `ForestWatch_Patches_Transfer/<region>/` dengan metadata `source: transfer`. Penggabungan ke pool training **hanya** terjadi **setelah** split train/val/test (test = 100% Papua holdout) — lihat TAHAP 2 langkah 1–2. Jika "langsung dicampur" sebelum split diikuti, data transfer bisa **bocor** ke test set Papua dan evaluasi jadi tidak jujur.
 
 ## 4. Antisipasi Risiko (Domain Shift)
 Meskipun teknik ini sangat *powerful*, kita harus waspada terhadap fenomena **Domain Shift** (Pergeseran Domain), di mana fitur target di area *training* memiliki distribusi warna yang sedikit berbeda dari area *deployment* (Papua).

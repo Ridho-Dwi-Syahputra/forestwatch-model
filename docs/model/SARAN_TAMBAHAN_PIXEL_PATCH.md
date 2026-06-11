@@ -1,3 +1,5 @@
+> ℹ️ **CATATAN STATUS.** Filosofi imbalance di **§1** **masih berlaku penuh** — sudah diadopsi sebagai §1.2 di [`RENCANA_EKSEKUSI_LANJUTAN.md`](RENCANA_EKSEKUSI_LANJUTAN.md) v8.0. Namun target angka di **§3** (~750 patch tambahan / 20–30 MB) sudah **DI-OVERRIDE** oleh keputusan USER ke skala **~250 juta px raw/kelas** (~20× lebih besar) — lihat RENCANA §1.1 & §1.5. Region/lokasi di §3 tetap relevan sebagai titik awal, namun cakupan BBox diperluas signifikan dan ditambah region lain (lihat RENCANA §1.1 untuk daftar final per kelas).
+
 # Rencana Akuisisi Data Ekstraksi (Domain Generalization)
 
 Dokumen ini merangkum analisis distribusi piksel terkini (Papua) dan strategi penambahan *patch* dari luar wilayah Papua untuk menangani *class imbalance* tanpa mengorbankan rasio alamiah data (Real-World Prior).
@@ -22,6 +24,8 @@ Distribusi diambil dari 193.453 *patch* aktual Papua:
 - **Kelas 4 (Pertanian Lain):** 84 Juta piksel (0.66%)
 - **Kelas 5 (Tambang):** 343 Ribu piksel (0.0027%) ⚠️ **Kritis**
 - **Kelas 6 (Permukiman):** 11.6 Juta piksel (0.091%) ⚠️ **Kurang**
+
+> 📌 Angka di atas adalah angka **PRA-HEALING (arsip)**. Lihat RENCANA §0 untuk angka **PASCA-HEALING** terkini (acuan terbaru): Perairan ~66,4%, Hutan ~32,0% (rawa yang sempat salah jadi "Perairan" sudah dikembalikan ke "Hutan"). Angka kelas 2–6 di atas tidak berubah oleh healing.
 
 ---
 

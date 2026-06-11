@@ -37,3 +37,7 @@ Pemulihan dilakukan menggunakan arsitektur pemrosesan paralel (36 *Workers* `Pro
 - Ratusan juta piksel Hutan Rawa berhasil dikembalikan ke habitat aslinya (Kelas 1).
 - Distribusi kelas (terutama persentase Hutan vs Perairan) kembali akurat dan mencerminkan prioritas alam nyata (*Real-world prior*).
 - Anomali lain seperti "belang-belang" pada area pertambangan (*Tailings Pond*) **dibiarkan**, karena secara fisik genangan limbah tambang memang merupakan benda cair. Anomali kecil ini (*Noisy Labels*) akan ditangani secara otomatis oleh toleransi algoritmik dari **Focal Tversky Loss** selama fase *training*.
+
+---
+
+> 📌 **Catatan lanjutan ([`RENCANA_EKSEKUSI_LANJUTAN.md`](RENCANA_EKSEKUSI_LANJUTAN.md) v8.0, TAHAP 0 §1.3):** Healing pasca-hoc di atas hanya berlaku untuk ±193.453 patch Papua yang **sudah** diekspor. Untuk region transfer-learning baru (Kalimantan/Sulawesi/Sumatra/Jawa, TAHAP 1), bug mapping `DW_TO_CLASS[3]=0` akan diperbaiki **langsung di sumber** (`constants.py`/`label_fusion.py`) sebelum cut patch — bukan mengulang proses *Label Healer* 36-worker di atas untuk tiap region baru.

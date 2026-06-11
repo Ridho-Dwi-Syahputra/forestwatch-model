@@ -1,3 +1,5 @@
+> ⚠️ **DOKUMEN USANG (v1.0).** Skema di bawah sudah lama (6 kelas, T2=2024, "Lahan Terbakar", BIOPAMA, 4 transisi, "food estate"). Skema final sekarang **7 kelas** (…, Lahan Terbuka, Tambang, Permukiman), **T2=2025**, dataset upgrade (FDP Palm 2025a + Mining union TW+Maus). **Rencana eksekusi terkini → [`RENCANA_EKSEKUSI_LANJUTAN.md`](RENCANA_EKSEKUSI_LANJUTAN.md).** Isi di bawah dibiarkan utuh sebagai arsip historis.
+
 # MASTER PLAN — Role MODEL (Orang 1)
 
 **Proyek:** ForestWatch Papua — Sistem Deteksi Dini Deforestasi Berbasis Deep Learning
@@ -12,7 +14,7 @@
 
 ## 1. Ringkasan Peran & Tujuan
 
-Sebagai **Machine Learning Lead (Orang 1)**, tugas utama adalah membangun model segmentasi semantik **ResNet50-U-Net** yang mengklasifikasikan tutupan lahan Papua dari citra **Sentinel-2** ke dalam **6 kelas**, lalu menjalankan **deteksi perubahan 2021 vs 2024** untuk menghasilkan peta deforestasi beserta **4 jenis transisi** (hutan ke lahan terbuka, hutan ke sawit, hutan ke pertanian lain, hutan ke terbakar).
+Sebagai **Machine Learning Lead (Orang 1)**, tugas utama adalah membangun model segmentasi semantik **ResNet50-U-Net** yang mengklasifikasikan tutupan lahan Papua dari citra **Sentinel-2** ke dalam **7 kelas**, lalu menjalankan **deteksi perubahan 2021 vs 2024** untuk menghasilkan peta deforestasi beserta **4 jenis transisi** (hutan ke lahan terbuka, hutan ke sawit, hutan ke pertanian lain, hutan ke terbakar).
 
 ### Target Keberhasilan (dari PRD §A.1)
 
