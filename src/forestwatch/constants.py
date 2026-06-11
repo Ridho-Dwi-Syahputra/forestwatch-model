@@ -33,6 +33,19 @@ CLASS_NAMES_EN: tuple[str, ...] = (
     "Built-up/Settlement",
 )
 
+# Slug aman-path (huruf kecil, tanpa spasi) untuk nama sub-folder per-kelas di
+# Drive (mis. ForestWatch_Patches_Transfer/<slug>/) & file augmentasi offline.
+# Selaras urut dgn CLASS_NAMES — dipakai di notebook Bagian 11–14 + scripts/augment_offline.py.
+CLASS_SLUGS: tuple[str, ...] = (
+    "perairan",
+    "hutan",
+    "lahan_terbuka",
+    "sawit",
+    "pertanian_lain",
+    "tambang",
+    "permukiman",
+)
+
 # Palette warna untuk render PNG (PRD §A.5 Cell 10)
 PALETTE_RGB: dict[int, tuple[int, int, int]] = {
     0: (42, 111, 219),   # Perairan      — biru
@@ -160,17 +173,31 @@ GEE_ASSETS: dict[str, str] = {
 # 5 Shrub/Scrub, 6 Built, 7 Bare, 8 Snow/Ice (Brown dkk. 2022).
 # DW dipakai sebagai PETA DASAR yang lengkap (tanpa default 'Pertanian Lain'),
 # lalu di-overlay tematik (Hansen→2, Mining→5, Sawit→3). Lihat label_fusion.py.
+#
+# CATATAN BUG RAWA (DW 3 Flooded Veg): DW kerap menandai kanopi hutan rawa Papua
+# (Asmat/Mamberamo, hutan rawa terluas di Asia) sebagai Flooded Veg / Water,
+# sehingga jutaan piksel HUTAN salah jadi PERAIRAN. Remap awal di bawah (3→0)
+# DIPERTAHANKAN sebagai default konservatif, TETAPI label_fusion menerapkan
+# *healing NDVI di sumber*: piksel Perairan (0) dgn NDVI > NDVI_FOREST_THRESHOLD
+# dikembalikan ke Hutan (1). Healing ini berlaku untuk SEMUA region (termasuk
+# transfer-learning luar Papua), menggantikan healing pasca-hoc manual (Bagian
+# 10B notebook). Lihat ``gee/label_fusion.py`` (build_label / apply_label_fusion_numpy).
 DW_TO_CLASS: dict[int, int] = {
     0: 0,  # Water           → Perairan
     1: 1,  # Trees           → Hutan
     2: 4,  # Grass           → Pertanian Lain (vegetasi non-hutan)
-    3: 0,  # Flooded Veg     → Perairan (rawa/wetland)
+    3: 0,  # Flooded Veg     → Perairan (di-heal via NDVI di label_fusion: rawa berkanopi → Hutan)
     4: 4,  # Crops           → Pertanian Lain
     5: 4,  # Shrub/Scrub     → Pertanian Lain (vegetasi non-hutan)
     6: 6,  # Built           → Permukiman (lahan terbangun)
     7: 2,  # Bare            → Lahan Terbuka
     8: 2,  # Snow/Ice        → Lahan Terbuka (Puncak Jaya, sangat kecil)
 }
+
+# Ambang NDVI untuk healing hutan rawa: piksel berlabel Perairan (0) dengan
+# NDVI di atas nilai ini = kanopi vegetasi lebat (mustahil air murni) →
+# dikembalikan ke Hutan (1). Selaras dengan healing Bagian 10B (NDVI > 0.3).
+NDVI_FOREST_THRESHOLD: float = 0.3
 
 # ============================================================================
 # OUTPUT FILE NAMES (7 file kontrak — PRD §B.1)

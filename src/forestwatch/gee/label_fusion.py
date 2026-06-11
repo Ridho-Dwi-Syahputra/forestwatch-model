@@ -13,6 +13,10 @@ Papua yang ~75–85% hutan). Lihat catatan EDA di notebook.
        DW "Built" (6) → Permukiman (kelas 6); Bare/Snow → Lahan Terbuka (2).
     2. (opsional) Perkuat Hutan dgn ESA WorldCover via UNION — hanya MENAMBAH
        hutan, tidak pernah menjatuhkannya ke kelas lain.
+    2b. Healing rawa (NDVI di sumber): piksel Perairan (0) dgn NDVI > ambang =
+       kanopi hutan rawa yang salah dikenali DW sbg air → kembalikan ke Hutan
+       (1). Berlaku untuk SEMUA region (Papua & transfer-learning), menggantikan
+       healing pasca-hoc manual notebook Bagian 10B. Lihat ``heal_swamp_forest``.
     3. Overlay tematik (urutan menimpa):
          a. Hansen lossyear ≥ threshold (setelah erosi 1 piksel) → 2 Lahan Terbuka
             (piksel hutan yang baru hilang/terbuka; "deforestasi" sbg PERISTIWA
@@ -33,7 +37,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from forestwatch.constants import DW_TO_CLASS, GEE_ASSETS
+from forestwatch.constants import DW_TO_CLASS, GEE_ASSETS, NDVI_FOREST_THRESHOLD
 
 if TYPE_CHECKING:
     import ee
@@ -48,6 +52,9 @@ def build_label(
     palm_prob_threshold: float = 0.5,
     dw_filter_year: int | None = None,
     esa_forest_union: bool = False,
+    heal_swamp_forest: bool = True,
+    ndvi_forest_threshold: float = NDVI_FOREST_THRESHOLD,
+    composite: "ee.Image | None" = None,
 ) -> "ee.Image":
     """Bangun ``ee.Image`` label 7 kelas — Dynamic World base + overlay tematik.
 
@@ -60,6 +67,15 @@ def build_label(
         dw_filter_year: Tahun mode Dynamic World. Default = ``label_year``.
         esa_forest_union: Bila True, perkuat Hutan dgn ESA tree_cover (UNION;
             hanya menambah hutan, tidak menghapus). Default False (murni DW).
+        heal_swamp_forest: Bila True (default), terapkan *healing NDVI di sumber*
+            untuk bug rawa: piksel Perairan (0) dgn NDVI > ``ndvi_forest_threshold``
+            dikembalikan ke Hutan (1). Berlaku SEMUA region (Papua & transfer),
+            menggantikan healing pasca-hoc manual (notebook Bagian 10B).
+        ndvi_forest_threshold: Ambang NDVI healing (default 0.3, lihat constants).
+        composite: (opsional) komposit S2 (≥ band B8 & B4) untuk hitung NDVI.
+            Bila ``None`` dan ``heal_swamp_forest=True``, komposit dihitung ulang
+            internal via ``s2_composite(label_year, region)``. Sebaiknya teruskan
+            komposit yang sudah ada di pemanggil agar tidak dihitung dua kali.
 
     Returns:
         ``ee.Image`` 1 band ``label`` (uint8) bernilai 0..6
@@ -90,6 +106,20 @@ def build_label(
         # air/bare/crops, jadi tak mengulang bug "forest jatuh ke kelas lain".
         is_extra_forest = esa.eq(10).And(dw.eq(1).Or(dw.eq(2)).Or(dw.eq(5)))
         label = label.where(is_extra_forest, 1)
+
+    # ---- 2b. HEALING RAWA (NDVI di sumber, berlaku semua region) ----
+    # Piksel berlabel Perairan (0) dgn NDVI tinggi = kanopi hutan rawa yang
+    # salah dikenali DW sbg air → kembalikan ke Hutan (1). Diterapkan SEBELUM
+    # overlay tematik; overlay (Hansen/Mining/Sawit) tetap dapat menimpa bila
+    # piksel tsb memang loss/tambang/sawit. Tailing pond (NDVI rendah) tak
+    # tersentuh → tetap bisa jadi Tambang via overlay 3b.
+    if heal_swamp_forest:
+        if composite is None:
+            from forestwatch.gee.composite import s2_composite  # noqa: PLC0415
+
+            composite = s2_composite(label_year, region)
+        ndvi = composite.normalizedDifference(["B8", "B4"]).rename("ndvi")
+        label = label.where(label.eq(0).And(ndvi.gt(ndvi_forest_threshold)), 1)
 
     # ---- 3a. Hansen loss → Lahan Terbuka kelas 2 (MENIMPA) ----
     hansen = ee.Image(GEE_ASSETS["hansen_gfc"])
@@ -135,6 +165,8 @@ def apply_label_fusion_numpy(
     is_palm: "object",
     *,
     esa: "object | None" = None,
+    ndvi: "object | None" = None,
+    ndvi_forest_threshold: float = NDVI_FOREST_THRESHOLD,
 ):
     """Versi numpy dari ``build_label`` (DW-base) — untuk unit test.
 
@@ -144,6 +176,11 @@ def apply_label_fusion_numpy(
         is_mining: ndarray boolean — piksel Tambang (poligon mining).
         is_palm: ndarray boolean — piksel Sawit (FDP palm ≥ ambang).
         esa: (opsional) ndarray ESA WorldCover untuk UNION Hutan.
+        ndvi: (opsional) ndarray NDVI [-1,1] untuk healing rawa. Bila diberikan,
+            piksel Perairan (0) dgn ``ndvi > ndvi_forest_threshold`` → Hutan (1),
+            meniru ``build_label(heal_swamp_forest=True)``. Bila ``None``, tidak
+            ada healing (flooded veg tetap mengikuti ``DW_TO_CLASS``).
+        ndvi_forest_threshold: Ambang NDVI healing (default 0.3).
 
     Returns:
         Label ``uint8`` 0..6 (5 = Tambang, 6 = Permukiman). Lazy import numpy.
@@ -161,6 +198,12 @@ def apply_label_fusion_numpy(
     if esa is not None:
         esa = np.asarray(esa)
         label[(esa == 10) & np.isin(dw, [1, 2, 5])] = 1
+
+    # (opsional) HEALING RAWA: Perairan (0) ber-NDVI tinggi = kanopi hutan rawa
+    # → Hutan (1). Diterapkan SEBELUM overlay tematik (sama seperti build_label).
+    if ndvi is not None:
+        ndvi = np.asarray(ndvi)
+        label[(label == 0) & (ndvi > ndvi_forest_threshold)] = 1
 
     label[np.asarray(hansen_loss_eroded).astype(bool)] = 2  # MENIMPA: Lahan Terbuka (kelas 2)
     label[np.asarray(is_mining).astype(bool)] = 5           # MENIMPA: Tambang

@@ -53,7 +53,8 @@ def main(argv: list[str] | None = None) -> int:
 
     img_t2 = s2_composite(args.year_t2, region)
     img_t1 = s2_composite(args.year_t1, region)
-    label = build_label(region, args.year_t2)
+    # Teruskan komposit T2 agar healing rawa (NDVI) tidak menghitung ulang komposit.
+    label = build_label(region, args.year_t2, composite=img_t2)
     stack_t2 = img_t2.addBands(label)
 
     tiles = make_tiles(region, nx=args.nx, ny=args.ny)
