@@ -8,6 +8,7 @@ from forestwatch.constants import (
     CLASS_IDS,
     CLASS_NAMES,
     CLASS_NAMES_EN,
+    CLASS_SLUGS,
     CLASS_WEIGHTS_DEFAULT,
     N_BANDS,
     N_CLASSES,
@@ -26,9 +27,20 @@ def test_class_count_consistent():
     assert len(CLASS_IDS) == N_CLASSES
     assert len(CLASS_NAMES) == N_CLASSES
     assert len(CLASS_NAMES_EN) == N_CLASSES
+    assert len(CLASS_SLUGS) == N_CLASSES
     assert len(CLASS_WEIGHTS_DEFAULT) == N_CLASSES
     assert len(PALETTE_RGB) == N_CLASSES
     assert len(CLASS_COLORS) == N_CLASSES
+
+
+def test_class_slugs_path_safe():
+    """Slug per-kelas harus aman dipakai sbg nama folder (lowercase, tanpa spasi)."""
+    import re
+
+    pat = re.compile(r"^[a-z0-9_]+$")
+    assert len(set(CLASS_SLUGS)) == N_CLASSES  # unik
+    for slug in CLASS_SLUGS:
+        assert pat.match(slug), f"slug tidak aman-path: {slug!r}"
 
 
 def test_class_ids_match_palette_keys():

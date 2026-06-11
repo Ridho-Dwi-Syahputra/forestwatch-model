@@ -33,6 +33,19 @@ CLASS_NAMES_EN: tuple[str, ...] = (
     "Built-up/Settlement",
 )
 
+# Slug aman-path (huruf kecil, tanpa spasi) untuk nama sub-folder per-kelas di
+# Drive (mis. ForestWatch_Patches_Transfer/<slug>/) & file augmentasi offline.
+# Selaras urut dgn CLASS_NAMES — dipakai di notebook Bagian 11–14 + scripts/augment_offline.py.
+CLASS_SLUGS: tuple[str, ...] = (
+    "perairan",
+    "hutan",
+    "lahan_terbuka",
+    "sawit",
+    "pertanian_lain",
+    "tambang",
+    "permukiman",
+)
+
 # Palette warna untuk render PNG (PRD §A.5 Cell 10)
 PALETTE_RGB: dict[int, tuple[int, int, int]] = {
     0: (42, 111, 219),   # Perairan      — biru
