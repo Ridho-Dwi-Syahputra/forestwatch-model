@@ -63,6 +63,34 @@ def test_papua_dataset_returns_tensors(tmp_path):
     assert lab.dtype == torch.long
 
 
+def test_build_dataloaders_from_files(tmp_path):
+    from forestwatch.data.dataset import build_dataloaders_from_files
+    from forestwatch.utils.io import save_npz
+
+    for i in range(6):
+        save_npz(
+            tmp_path / f"p{i:05d}.npz",
+            img=np.random.rand(6, 32, 32).astype("float32"),
+            lab=np.random.randint(0, 6, (32, 32)).astype("uint8"),
+        )
+    files = sorted(tmp_path.glob("p*.npz"))
+    train_f, val_f, test_f = files[:4], files[4:5], files[5:6]
+
+    train_loader, val_loader, test_loader = build_dataloaders_from_files(
+        train_f, val_f, test_f, batch_size=2, num_workers=0,
+    )
+    assert len(train_loader.dataset) == 4
+    assert len(val_loader.dataset) == 1
+    assert len(test_loader.dataset) == 1
+
+
+def test_build_dataloaders_from_files_empty_train_raises(tmp_path):
+    from forestwatch.data.dataset import build_dataloaders_from_files
+
+    with pytest.raises(FileNotFoundError):
+        build_dataloaders_from_files([], [], [], num_workers=0)
+
+
 def test_papua_dataset_with_augmentation(tmp_path):
     from forestwatch.data.dataset import PapuaDataset
     from forestwatch.utils.io import save_npz
