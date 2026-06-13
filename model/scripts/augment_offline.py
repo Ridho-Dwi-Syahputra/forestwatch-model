@@ -34,6 +34,8 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 
+from tqdm.auto import tqdm
+
 from forestwatch.constants import CLASS_SLUGS, N_CLASSES
 from forestwatch.utils.io import save_json, save_npz
 from forestwatch.utils.logging import get_logger
@@ -269,7 +271,10 @@ def augment_offline(
         brightness_p=brightness_p,
     )
     with ThreadPoolExecutor(max_workers=max_workers) as exe:
-        for target_cls, n_gen in exe.map(worker, files, rngs):
+        results = exe.map(worker, files, rngs)
+        for target_cls, n_gen in tqdm(
+            results, total=len(files), desc="Augmentasi offline", unit="patch"
+        ):
             if target_cls is None:
                 continue
             n_src_used += 1
