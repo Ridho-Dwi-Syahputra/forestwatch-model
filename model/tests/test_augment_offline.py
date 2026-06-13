@@ -311,6 +311,36 @@ def test_clean_false_preserves_stale_files(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Regresi: nama output unik lintas subfolder sumber (cegah overwrite)
+# ---------------------------------------------------------------------------
+
+
+def test_out_name_unique_across_source_subdirs(tmp_path):
+    """cut_patches() menamai ulang dari p00000.npz di setiap folder sumber, jadi
+    stem yg sama (mis. p00001) bisa muncul di >1 subfolder ``PATCHES_TRANSFER``.
+    Tanpa nama folder induk di ``out_name``, save_npz akan overwrite satu sama
+    lain -> gen lebih besar dari jumlah file fisik di disk (lihat
+    docs/model/RENCANA_EKSEKUSI_LANJUTAN.md, kasus 4024 vs 655).
+    """
+    src = tmp_path / "src"
+    (src / "tambang").mkdir(parents=True)
+    (src / "permukiman").mkdir(parents=True)
+    _make_patch(src / "tambang", "p00001.npz", _dominant_lab(5))
+    _make_patch(src / "permukiman", "p00001.npz", _dominant_lab(5))
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, classes=(5,), multiplier=2, seed=1)
+
+    assert gen[5] == 2
+    found = list((out / "tambang").glob("aug_*.npz"))
+    assert len(found) == gen[5]
+    assert {f.name for f in found} == {
+        "aug_tambang_p00001_00.npz",
+        "aug_permukiman_p00001_00.npz",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Regresi: output augmentasi harus terdeteksi oleh list_patches()
 # ---------------------------------------------------------------------------
 

@@ -171,7 +171,7 @@ def _augment_one(
                 aug_img, rng,
                 brightness_limit=brightness_limit, contrast_limit=contrast_limit,
             )
-        out_name = f"aug_{f.stem}_{k_copy:02d}.npz"
+        out_name = f"aug_{f.parent.name}_{f.stem}_{k_copy:02d}.npz"
         save_npz(
             cls_dir / out_name,
             img=aug_img,
