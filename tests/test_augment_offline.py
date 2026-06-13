@@ -315,18 +315,18 @@ def test_clean_false_preserves_stale_files(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_out_name_unique_across_source_subdirs(tmp_path):
-    """cut_patches() menamai ulang dari p00000.npz di setiap folder sumber, jadi
-    stem yg sama (mis. p00001) bisa muncul di >1 subfolder ``PATCHES_TRANSFER``.
-    Tanpa nama folder induk di ``out_name``, save_npz akan overwrite satu sama
-    lain -> gen lebih besar dari jumlah file fisik di disk (lihat
-    docs/model/RENCANA_EKSEKUSI_LANJUTAN.md, kasus 4024 vs 655).
+def test_out_name_unique_when_parent_name_and_stem_collide(tmp_path):
+    """Struktur sumber bertingkat (``<region>/<slug>/p#####.npz``) bisa membuat
+    ``(parent.name, stem)`` sama utk 2 file BERBEDA (region berbeda, slug & stem
+    sama) -> out_name harus tetap unik via ``file_idx``, bukan hanya parent.name
+    (lihat docs/model/RENCANA_EKSEKUSI_LANJUTAN.md: 4024 -> 3938 setelah fix
+    parent.name, sisa 86 masih collision).
     """
     src = tmp_path / "src"
-    (src / "tambang").mkdir(parents=True)
-    (src / "permukiman").mkdir(parents=True)
-    _make_patch(src / "tambang", "p00001.npz", _dominant_lab(5))
-    _make_patch(src / "permukiman", "p00001.npz", _dominant_lab(5))
+    (src / "region_a" / "tambang").mkdir(parents=True)
+    (src / "region_b" / "tambang").mkdir(parents=True)
+    _make_patch(src / "region_a" / "tambang", "p00001.npz", _dominant_lab(5))
+    _make_patch(src / "region_b" / "tambang", "p00001.npz", _dominant_lab(5))
 
     out = tmp_path / "aug"
     gen = run_aug(src, out, classes=(5,), multiplier=2, seed=1)
@@ -335,8 +335,8 @@ def test_out_name_unique_across_source_subdirs(tmp_path):
     found = list((out / "tambang").glob("aug_*.npz"))
     assert len(found) == gen[5]
     assert {f.name for f in found} == {
-        "aug_tambang_p00001_00.npz",
-        "aug_permukiman_p00001_00.npz",
+        "aug_000000_tambang_p00001_00.npz",
+        "aug_000001_tambang_p00001_00.npz",
     }
 
 

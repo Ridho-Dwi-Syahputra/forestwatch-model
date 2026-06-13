@@ -111,6 +111,7 @@ def _target_class_of(lab, classes: tuple[int, ...], min_target_frac: float) -> i
 def _augment_one(
     f: Path,
     rng: "np.random.Generator",
+    file_idx: int,
     *,
     classes: tuple[int, ...],
     min_target_frac: float,
@@ -126,7 +127,10 @@ def _augment_one(
     terbaca atau tak punya kelas minoritas yang cukup (``n_generated`` selalu 0
     dalam kasus itu). Dipanggil dari thread worker — ``rng`` harus independen
     per-file (lihat ``SeedSequence.spawn`` di ``augment_offline``) supaya
-    thread-safe & deterministik.
+    thread-safe & deterministik. ``file_idx`` (posisi ``f`` di list sumber)
+    diselipkan ke nama file output agar tetap unik lintas subfolder sumber
+    meski ``(parent.name, stem)`` kebetulan sama (struktur sumber bertingkat,
+    mis. ``<region>/<slug>/p00000.npz``).
     """
     import numpy as np  # noqa: PLC0415
 
@@ -171,7 +175,7 @@ def _augment_one(
                 aug_img, rng,
                 brightness_limit=brightness_limit, contrast_limit=contrast_limit,
             )
-        out_name = f"aug_{f.parent.name}_{f.stem}_{k_copy:02d}.npz"
+        out_name = f"aug_{file_idx:06d}_{f.parent.name}_{f.stem}_{k_copy:02d}.npz"
         save_npz(
             cls_dir / out_name,
             img=aug_img,
@@ -271,7 +275,7 @@ def augment_offline(
         brightness_p=brightness_p,
     )
     with ThreadPoolExecutor(max_workers=max_workers) as exe:
-        results = exe.map(worker, files, rngs)
+        results = exe.map(worker, files, rngs, range(len(files)))
         for target_cls, n_gen in tqdm(
             results, total=len(files), desc="Augmentasi offline", unit="patch"
         ):
