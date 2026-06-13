@@ -190,8 +190,14 @@ def _loaders_from_split(
     augment_p: dict[str, float] | None,
     class_weights: Sequence[float] | None,
     sampler_cache: str | os.PathLike[str] | None,
+    persistent_workers: bool = False,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
     from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415
+
+    # ``persistent_workers`` hanya valid bila ada worker (>0); PyTorch error bila
+    # True saat num_workers=0. Jaga worker tetap hidup antar-epoch (kurangi
+    # overhead respawn di mesin lab multi-core).
+    _pw = bool(persistent_workers) and num_workers > 0
 
     train_ds = PapuaDataset(train_f, train=True, augment_p=augment_p)
     if class_weights is not None:
@@ -207,6 +213,7 @@ def _loaders_from_split(
             num_workers=num_workers,
             pin_memory=True,
             drop_last=True,
+            persistent_workers=_pw,
         )
     else:
         train_loader = DataLoader(
@@ -216,6 +223,7 @@ def _loaders_from_split(
             num_workers=num_workers,
             pin_memory=True,
             drop_last=True,
+            persistent_workers=_pw,
         )
     val_loader = DataLoader(
         PapuaDataset(val_f, train=False),
@@ -223,6 +231,7 @@ def _loaders_from_split(
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
+        persistent_workers=_pw,
     )
     test_loader = DataLoader(
         PapuaDataset(test_f, train=False),
@@ -230,6 +239,7 @@ def _loaders_from_split(
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
+        persistent_workers=_pw,
     )
     return train_loader, val_loader, test_loader
 
@@ -245,6 +255,7 @@ def build_dataloaders(
     augment_p: dict[str, float] | None = None,
     class_weights: Sequence[float] | None = None,
     sampler_cache: str | os.PathLike[str] | None = None,
+    persistent_workers: bool = False,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
     """Bangun ``train_loader, val_loader, test_loader`` dari satu folder patch.
 
@@ -258,6 +269,9 @@ def build_dataloaders(
         class_weights: Bila diberikan, train_loader memakai ``WeightedRandomSampler``
             (oversample patch kelas langka) menggantikan ``shuffle``.
         sampler_cache: Path cache JSON bobot sampler (per-patch). Restart-safe.
+        persistent_workers: Jaga worker DataLoader tetap hidup antar-epoch
+            (otomatis ``False`` bila ``num_workers=0``). Berguna di mesin
+            multi-core (lab) untuk kurangi overhead respawn worker.
 
     Returns:
         ``(train_loader, val_loader, test_loader)``.
@@ -282,6 +296,7 @@ def build_dataloaders(
         train_f, val_f, test_f,
         batch_size=batch_size, num_workers=num_workers, augment_p=augment_p,
         class_weights=class_weights, sampler_cache=sampler_cache,
+        persistent_workers=persistent_workers,
     )
 
 
@@ -295,6 +310,7 @@ def build_dataloaders_from_files(
     augment_p: dict[str, float] | None = None,
     class_weights: Sequence[float] | None = None,
     sampler_cache: str | os.PathLike[str] | None = None,
+    persistent_workers: bool = False,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
     """Bangun ``train_loader, val_loader, test_loader`` dari daftar file eksplisit.
 
@@ -311,6 +327,9 @@ def build_dataloaders_from_files(
         class_weights: Bila diberikan, train_loader memakai ``WeightedRandomSampler``
             (oversample patch kelas langka) menggantikan ``shuffle``.
         sampler_cache: Path cache JSON bobot sampler (per-patch). Restart-safe.
+        persistent_workers: Jaga worker DataLoader tetap hidup antar-epoch
+            (otomatis ``False`` bila ``num_workers=0``). Berguna di mesin
+            multi-core (lab) untuk kurangi overhead respawn worker.
 
     Returns:
         ``(train_loader, val_loader, test_loader)``.
@@ -327,4 +346,5 @@ def build_dataloaders_from_files(
         train_files, val_files, test_files,
         batch_size=batch_size, num_workers=num_workers, augment_p=augment_p,
         class_weights=class_weights, sampler_cache=sampler_cache,
+        persistent_workers=persistent_workers,
     )

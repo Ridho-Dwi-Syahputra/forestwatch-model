@@ -84,6 +84,27 @@ def test_build_dataloaders_from_files(tmp_path):
     assert len(test_loader.dataset) == 1
 
 
+def test_build_dataloaders_persistent_workers_clamped_when_no_workers(tmp_path):
+    """persistent_workers=True dgn num_workers=0 -> di-clamp ke False (PyTorch
+    error kalau True tanpa worker). Param diterima & diteruskan ke DataLoader."""
+    from forestwatch.data.dataset import build_dataloaders_from_files
+    from forestwatch.utils.io import save_npz
+
+    for i in range(6):
+        save_npz(
+            tmp_path / f"p{i:05d}.npz",
+            img=np.random.rand(6, 32, 32).astype("float32"),
+            lab=np.random.randint(0, 6, (32, 32)).astype("uint8"),
+        )
+    files = sorted(tmp_path.glob("p*.npz"))
+    train_loader, val_loader, test_loader = build_dataloaders_from_files(
+        files[:4], files[4:5], files[5:6],
+        batch_size=2, num_workers=0, persistent_workers=True,
+    )
+    for ldr in (train_loader, val_loader, test_loader):
+        assert ldr.persistent_workers is False
+
+
 def test_build_dataloaders_from_files_empty_train_raises(tmp_path):
     from forestwatch.data.dataset import build_dataloaders_from_files
 
