@@ -180,50 +180,18 @@ def compute_patch_sampler_weights(
     return weights
 
 
-def build_dataloaders(
-    patch_dir: str | os.PathLike[str],
+def _loaders_from_split(
+    train_f: Sequence[str | os.PathLike[str]],
+    val_f: Sequence[str | os.PathLike[str]],
+    test_f: Sequence[str | os.PathLike[str]],
     *,
-    batch_size: int = 8,
-    num_workers: int = 2,
-    train_ratio: float = 0.8,
-    val_ratio: float = 0.1,
-    seed: int = 42,
-    augment_p: dict[str, float] | None = None,
-    class_weights: Sequence[float] | None = None,
-    sampler_cache: str | os.PathLike[str] | None = None,
+    batch_size: int,
+    num_workers: int,
+    augment_p: dict[str, float] | None,
+    class_weights: Sequence[float] | None,
+    sampler_cache: str | os.PathLike[str] | None,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
-    """Bangun ``train_loader, val_loader, test_loader``.
-
-    Args:
-        patch_dir: Folder berisi ``p*.npz``.
-        batch_size: Batch size (lihat ``configs/default.yaml``).
-        num_workers: Worker DataLoader (2 default di Colab).
-        train_ratio, val_ratio: Rasio split (test = 1 - train - val).
-        seed: Random seed untuk split deterministik.
-        augment_p: Probabilitas augmentasi (lihat ``PapuaDataset``).
-        class_weights: Bila diberikan, train_loader memakai ``WeightedRandomSampler``
-            (oversample patch kelas langka) menggantikan ``shuffle``.
-        sampler_cache: Path cache JSON bobot sampler (per-patch). Restart-safe.
-
-    Returns:
-        ``(train_loader, val_loader, test_loader)``.
-    """
-    try:
-        from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415
-    except ImportError as e:
-        raise ImportError("Butuh torch. Install: pip install -e \".[ml]\"") from e
-
-    from forestwatch.data.patches import list_patches  # noqa: PLC0415
-
-    files = list_patches(patch_dir)
-    if not files:
-        raise FileNotFoundError(
-            f"Tidak ada patch di {patch_dir}. Jalankan ``cut_patches`` dahulu."
-        )
-
-    train_f, val_f, test_f = split_files(
-        files, train_ratio=train_ratio, val_ratio=val_ratio, seed=seed
-    )
+    from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415
 
     train_ds = PapuaDataset(train_f, train=True, augment_p=augment_p)
     if class_weights is not None:
@@ -264,3 +232,99 @@ def build_dataloaders(
         pin_memory=True,
     )
     return train_loader, val_loader, test_loader
+
+
+def build_dataloaders(
+    patch_dir: str | os.PathLike[str],
+    *,
+    batch_size: int = 8,
+    num_workers: int = 2,
+    train_ratio: float = 0.8,
+    val_ratio: float = 0.1,
+    seed: int = 42,
+    augment_p: dict[str, float] | None = None,
+    class_weights: Sequence[float] | None = None,
+    sampler_cache: str | os.PathLike[str] | None = None,
+) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
+    """Bangun ``train_loader, val_loader, test_loader`` dari satu folder patch.
+
+    Args:
+        patch_dir: Folder berisi ``p*.npz``.
+        batch_size: Batch size (lihat ``configs/default.yaml``).
+        num_workers: Worker DataLoader (2 default di Colab).
+        train_ratio, val_ratio: Rasio split (test = 1 - train - val).
+        seed: Random seed untuk split deterministik.
+        augment_p: Probabilitas augmentasi (lihat ``PapuaDataset``).
+        class_weights: Bila diberikan, train_loader memakai ``WeightedRandomSampler``
+            (oversample patch kelas langka) menggantikan ``shuffle``.
+        sampler_cache: Path cache JSON bobot sampler (per-patch). Restart-safe.
+
+    Returns:
+        ``(train_loader, val_loader, test_loader)``.
+    """
+    try:
+        from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415, F401
+    except ImportError as e:
+        raise ImportError("Butuh torch. Install: pip install -e \".[ml]\"") from e
+
+    from forestwatch.data.patches import list_patches  # noqa: PLC0415
+
+    files = list_patches(patch_dir)
+    if not files:
+        raise FileNotFoundError(
+            f"Tidak ada patch di {patch_dir}. Jalankan ``cut_patches`` dahulu."
+        )
+
+    train_f, val_f, test_f = split_files(
+        files, train_ratio=train_ratio, val_ratio=val_ratio, seed=seed
+    )
+    return _loaders_from_split(
+        train_f, val_f, test_f,
+        batch_size=batch_size, num_workers=num_workers, augment_p=augment_p,
+        class_weights=class_weights, sampler_cache=sampler_cache,
+    )
+
+
+def build_dataloaders_from_files(
+    train_files: Sequence[str | os.PathLike[str]],
+    val_files: Sequence[str | os.PathLike[str]],
+    test_files: Sequence[str | os.PathLike[str]],
+    *,
+    batch_size: int = 8,
+    num_workers: int = 2,
+    augment_p: dict[str, float] | None = None,
+    class_weights: Sequence[float] | None = None,
+    sampler_cache: str | os.PathLike[str] | None = None,
+) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
+    """Bangun ``train_loader, val_loader, test_loader`` dari daftar file eksplisit.
+
+    Dipakai saat split train/val/test sudah ditentukan di luar (mis. Bagian 14:
+    train = Papua-train + transfer + augmentasi offline; val/test = Papua-only
+    holdout) sehingga tidak di-split ulang dari satu folder seperti
+    :func:`build_dataloaders`.
+
+    Args:
+        train_files, val_files, test_files: Daftar path ``p*.npz``.
+        batch_size: Batch size (lihat ``configs/default.yaml``).
+        num_workers: Worker DataLoader (2 default di Colab).
+        augment_p: Probabilitas augmentasi (lihat ``PapuaDataset``).
+        class_weights: Bila diberikan, train_loader memakai ``WeightedRandomSampler``
+            (oversample patch kelas langka) menggantikan ``shuffle``.
+        sampler_cache: Path cache JSON bobot sampler (per-patch). Restart-safe.
+
+    Returns:
+        ``(train_loader, val_loader, test_loader)``.
+    """
+    try:
+        from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415, F401
+    except ImportError as e:
+        raise ImportError("Butuh torch. Install: pip install -e \".[ml]\"") from e
+
+    if not train_files:
+        raise FileNotFoundError("train_files kosong. Jalankan Bagian 14.1/14.2 dahulu.")
+
+    return _loaders_from_split(
+        train_files, val_files, test_files,
+        batch_size=batch_size, num_workers=num_workers, augment_p=augment_p,
+        class_weights=class_weights, sampler_cache=sampler_cache,
+    )

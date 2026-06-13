@@ -67,6 +67,110 @@ def test_multiplier_three_makes_two_copies(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Multiplier per-kelas (dict) & fractional (×1.5, ×2.5, dst.)
+# ---------------------------------------------------------------------------
+
+
+def test_dict_multiplier_per_class(tmp_path):
+    """Angka final yang disepakati: 2×1.5, 3×1, 4×1, 5×2, 6×2.5."""
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_patch(src, "p00001.npz", _dominant_lab(5))  # Tambang
+    _make_patch(src, "p00002.npz", _dominant_lab(3))  # Sawit
+    _make_patch(src, "p00003.npz", _dominant_lab(6))  # Permukiman
+
+    out = tmp_path / "aug"
+    manifest_path = tmp_path / "manifest.json"
+    gen = run_aug(
+        src, out, seed=1,
+        multiplier={2: 1.5, 3: 1, 4: 1, 5: 2, 6: 2.5},
+        manifest_path=manifest_path,
+    )
+
+    assert gen[5] == 1  # mult=2 -> deterministik 1 salinan
+    assert gen[3] == 0  # mult=1 -> 0 salinan
+    assert gen[6] in (1, 2)  # mult=2.5 -> 1 atau 2 (~50/50)
+    assert len(list((out / "tambang").glob("aug_*.npz"))) == gen[5]
+    assert len(list((out / "sawit").glob("aug_*.npz"))) == 0
+    assert len(list((out / "permukiman").glob("aug_*.npz"))) == gen[6]
+
+    import json
+
+    m = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert m["params"]["multiplier_map"] == {
+        "2": 1.5, "3": 1.0, "4": 1.0, "5": 2.0, "6": 2.5,
+    }
+    assert m["params"]["multiplier"] == {"2": 1.5, "3": 1, "4": 1, "5": 2, "6": 2.5}
+
+
+def test_multiplier_one_generates_zero_copies(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_patch(src, "p00001.npz", _dominant_lab(3))  # Sawit
+    _make_patch(src, "p00002.npz", _dominant_lab(4))  # Pertanian Lain
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, classes=(3, 4), multiplier=1, seed=1)
+
+    assert gen[3] == 0
+    assert gen[4] == 0
+    assert not list((out / "sawit").glob("aug_*.npz"))
+    assert not list((out / "pertanian_lain").glob("aug_*.npz"))
+    # Dir tetap dibuat oleh clean=True, hanya kosong.
+    assert (out / "sawit").is_dir()
+    assert (out / "pertanian_lain").is_dir()
+
+
+def test_dict_multiplier_one_for_specific_class(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_patch(src, "p00001.npz", _dominant_lab(3))  # Sawit
+    _make_patch(src, "p00002.npz", _dominant_lab(5))  # Tambang
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, multiplier={3: 1, 5: 2}, seed=1)
+
+    assert gen[3] == 0
+    assert gen[5] == 1
+    assert not list((out / "sawit").glob("aug_*.npz"))
+    assert len(list((out / "tambang").glob("aug_*.npz"))) == 1
+
+
+def test_fractional_multiplier_statistical(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    n_patches = 40
+    for i in range(n_patches):
+        _make_patch(src, f"p{i:05d}.npz", _dominant_lab(2))  # Lahan Terbuka
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, classes=(2,), multiplier=1.5, seed=123)
+
+    n_total = len(list((out / "lahan_terbuka").glob("aug_*.npz")))
+    assert n_total == gen[2]
+    # mult=1.5 -> extra=0.5 -> n_copies in {0,1}/patch, E[total]=20, std~3.16.
+    assert 7 <= n_total <= 33
+    assert n_total not in (0, n_patches)
+
+
+def test_fractional_multiplier_two_point_five(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    n_patches = 40
+    for i in range(n_patches):
+        _make_patch(src, f"p{i:05d}.npz", _dominant_lab(6))  # Permukiman
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, classes=(6,), multiplier=2.5, seed=123)
+
+    n_total = len(list((out / "permukiman").glob("aug_*.npz")))
+    assert n_total == gen[6]
+    # mult=2.5 -> extra=1.5 -> n_base=1 (selalu) + {0,1} ekstra, E[total]=60.
+    assert n_total >= n_patches  # n_base=1 -> minimal 1/patch
+    assert n_patches + 7 <= n_total <= n_patches + 33
+
+
+# ---------------------------------------------------------------------------
 # Label-safe: tak ada kelas baru, metadata benar
 # ---------------------------------------------------------------------------
 
@@ -165,3 +269,67 @@ def test_cli_main(tmp_path):
     )
     assert rc == 0
     assert len(list((out / "tambang").glob("aug_*.npz"))) == 1
+
+
+# ---------------------------------------------------------------------------
+# clean: idempoten lintas perubahan multiplier
+# ---------------------------------------------------------------------------
+
+
+def test_clean_removes_stale_files_from_previous_multiplier(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_patch(src, "p00001.npz", _dominant_lab(3))  # Sawit
+
+    out = tmp_path / "aug"
+
+    # Run 1: multiplier=2 -> 1 salinan di sawit/.
+    gen1 = run_aug(src, out, classes=(3,), multiplier=2, seed=1)
+    assert gen1[3] == 1
+    assert len(list((out / "sawit").glob("aug_*.npz"))) == 1
+
+    # Run 2: multiplier final=1 (Sawit tak diaugmentasi) pada out_dir SAMA.
+    # clean=True (default) harus membuang sisa file dari run 1.
+    gen2 = run_aug(src, out, classes=(3,), multiplier=1, seed=1)
+    assert gen2[3] == 0
+    assert list((out / "sawit").glob("aug_*.npz")) == []
+
+
+def test_clean_false_preserves_stale_files(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    _make_patch(src, "p00001.npz", _dominant_lab(3))
+
+    out = tmp_path / "aug"
+    run_aug(src, out, classes=(3,), multiplier=2, seed=1)
+    assert len(list((out / "sawit").glob("aug_*.npz"))) == 1
+
+    gen2 = run_aug(src, out, classes=(3,), multiplier=1, seed=1, clean=False)
+    assert gen2[3] == 0
+    # clean=False -> file lama dari run 1 tetap ada.
+    assert len(list((out / "sawit").glob("aug_*.npz"))) == 1
+
+
+# ---------------------------------------------------------------------------
+# Regresi: output augmentasi harus terdeteksi oleh list_patches()
+# ---------------------------------------------------------------------------
+
+
+def test_augmented_output_discoverable_via_list_patches(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    for i in range(3):
+        _make_patch(src, f"p{i:05d}.npz", _dominant_lab(5))  # Tambang, mult=2 -> 1 each
+    for i in range(3, 5):
+        _make_patch(src, f"p{i:05d}.npz", _dominant_lab(3))  # Sawit, mult=2 -> 1 each
+
+    out = tmp_path / "aug"
+    gen = run_aug(src, out, multiplier=2, seed=1)
+
+    from forestwatch.data.patches import list_patches
+
+    found = list_patches(out)
+
+    assert len(found) == sum(gen.values())
+    assert all(f.name.startswith("aug_") for f in found)
+    assert all(f.suffix == ".npz" for f in found)

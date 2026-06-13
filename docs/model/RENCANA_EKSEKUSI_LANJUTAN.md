@@ -172,6 +172,14 @@ Tujuan: setelah cut patches, pastikan datanya **siap** sebelum di-merge ke pool 
 3. **Augmentasi OFFLINE — HANYA pada patch TRAIN, untuk 5 kelas minoritas** (Lahan Terbuka, Sawit, Pertanian Lain, Tambang, Permukiman — dari Papua + transfer bila ada):
    - Transform: rotasi 90/180/270, flip H/V, brightness/contrast ringan (pakai ulang logika `dataset.py`).
    - **Multiplier KECIL di atas basis ~250 jt raw dari TAHAP 1** (placeholder **×2**, naik ke ×3 bila storage memungkinkan setelah TAHAP 1 selesai) → estimasi final **~500–750 juta px/kelas** (lihat §1.1).
+     > ✅ **ANGKA FINAL (terkunci & diimplementasikan)** — `augment_offline.py` (param `multiplier`
+     > sbg dict per-kelas, fractional) + notebook Bagian 14.2:
+     > `{Lahan Terbuka(2): ×1.5, Sawit(3): ×1, Pertanian Lain(4): ×1, Tambang(5): ×2, Permukiman(6): ×2.5}`
+     > (×1.5/×2.5 = peluang ~50% patch target dapat 1 salinan ekstra). Sekaligus **fix bug
+     > `list_patches()`** (`patches.py`, glob `"p*.npz"` → `"*.npz"`) — sebelumnya
+     > `AUGMENTED_PATCHES` (isi `aug_*.npz`) **tidak pernah terbaca** sehingga augmentasi
+     > offline inert (tidak masuk `final_train_files`/`dist_final`/class weights/sampler).
+     > Bukti: `model/tests/test_augment_offline.py` (15 tes, termasuk regresi `list_patches`).
    - Simpan ke folder baru `Augmented_Patches/` sebagai `.npz` (mis. `tambang_aug_00001.npz`).
    - ⚠️ **JANGAN augmentasi patch val/test** → kalau augmented copy dari patch test bocor ke train = evaluasi tidak jujur.
 4. Hitung ulang `class_distribution.json` + **median-frequency class weights** dari train (termasuk augmented).

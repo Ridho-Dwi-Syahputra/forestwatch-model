@@ -9,8 +9,9 @@ verifikasi notebook (lihat ``docs/model/RENCANA_EKSEKUSI_LANJUTAN.md``):
   "data siap di-training".
 
 Spesifikasi gerbang (permintaan USER): **7 gambar × 64 sample = 448 sample**,
-satu gambar per kelas dominan (grid 8×8), tiap sel = citra true-color +
-overlay label semi-transparan agar reviewer bisa cek kewajaran label.
+satu gambar per kelas dominan (grid 8×8 *pasangan*), tiap sample ditampilkan
+sebagai **pasangan (RGB asli | Label)** berdampingan — gaya EDA 2 (Bagian 0) —
+agar reviewer bisa bandingkan citra asli vs label secara langsung.
 
 Semua dependency berat (numpy/matplotlib) di-*lazy import* di dalam fungsi agar
 modul tetap ringan untuk diimpor (mis. di lingkungan tanpa matplotlib).
@@ -106,30 +107,30 @@ def plot_class_dominant_grid(
     n_per_class: int = 64,
     ignore_classes: tuple[int, ...] = (),
     out_dir: "str | os.PathLike[str] | None" = None,
-    overlay_alpha: float = 0.45,
-    dpi: int = 300,
+    dpi: int = 150,
     seed: int = 42,
     class_names: tuple[str, ...] | None = None,
 ) -> list[tuple[int, "object"]]:
-    """Buat 1 grid sample per kelas dominan (RGB + overlay label).
+    """Buat 1 grid sample per kelas dominan, tiap sample = pasangan (RGB | Label).
 
     Untuk tiap kelas yang punya ≥1 patch dominan, dibuat **satu** figure grid
-    (mis. 8×8 untuk ``n_per_class=64``). Target gerbang: 7 kelas × 64 = 448
-    sample. Kelas dengan kurang dari ``n_per_class`` patch dominan tetap
-    digambar (sel sisa dikosongkan) + dicatat lewat log (lihat catatan GATE 1
-    di RENCANA: pool transfer mungkin minim Perairan/Hutan dominan).
+    (mis. 8×8 pasangan untuk ``n_per_class=64``, gaya EDA 2 Bagian 0). Target
+    gerbang: 7 kelas × 64 = 448 sample. Kelas dengan kurang dari ``n_per_class``
+    patch dominan tetap digambar (sel sisa dikosongkan) + dicatat lewat log
+    (lihat catatan GATE 1 di RENCANA: pool transfer mungkin minim Perairan/Hutan
+    dominan).
 
     Args:
         patches: Folder ``.npz``, list path, ATAU dict hasil
             ``index_patches_by_dominant_class``.
         classes: Jumlah kelas (default 7).
-        n_per_class: Sample per kelas/grid (default 64 → 8×8).
+        n_per_class: Sample (pasangan RGB|Label) per kelas/grid (default 64 → 8×8).
         ignore_classes: Diteruskan ke pengelompokan dominan (abaikan bila
             ``patches`` sudah berupa dict).
         out_dir: Bila di-set, simpan tiap grid PNG (``grid_kelas_{id}_{nama}.png``)
             pada ``dpi`` ini. Folder auto-create.
-        overlay_alpha: Transparansi overlay label di atas RGB (0..1).
-        dpi: Resolusi simpan (default 300, selaras EDA Bagian 1–10).
+        dpi: Resolusi simpan (default 150 — grid pasangan 2x lebih lebar dari
+            grid overlay lama, selaras EDA2_Visual_128_Sample).
         seed: Seed pemilihan acak sample dari pool dominan.
         class_names: Override nama kelas (default ``CLASS_NAMES``).
 
@@ -143,6 +144,7 @@ def plot_class_dominant_grid(
     import numpy as np  # noqa: PLC0415
 
     try:
+        import matplotlib.patches as mpatches  # noqa: PLC0415
         import matplotlib.pyplot as plt  # noqa: PLC0415
     except ImportError as exc:
         raise ImportError(
@@ -163,8 +165,14 @@ def plot_class_dominant_grid(
         _logger.warning("Tidak ada patch dominan untuk digrid (pool kosong).")
         return []
 
+    # Grid SAMPLE (pasangan) ncols x nrows; tiap sample = 2 kolom subplot (RGB, Label).
     ncols = math.ceil(math.sqrt(n_per_class))
     nrows = math.ceil(n_per_class / ncols)
+
+    legend_handles = [
+        mpatches.Patch(color=np.array(PALETTE_RGB[c]) / 255.0, label=class_names[c])
+        for c in range(classes)
+    ]
 
     out_dir_p: Path | None = None
     if out_dir is not None:
@@ -189,26 +197,34 @@ def plot_class_dominant_grid(
             idx = rng.choice(n_avail, size=n_per_class, replace=False)
             chosen = [paths[i] for i in idx]
 
-        fig, axes = plt.subplots(nrows, ncols, figsize=(ncols, nrows))
-        axes = np.atleast_1d(axes).ravel()
-        for ax in axes:
+        fig, axes = plt.subplots(nrows, ncols * 2, figsize=(ncols * 3.0, nrows * 1.7))
+        axes = np.atleast_2d(axes)
+        for ax in axes.ravel():
             ax.axis("off")
 
-        for cell, p in enumerate(chosen):
+        for sample_i, p in enumerate(chosen):
+            row, pair = divmod(sample_i, ncols)
             data = np.load(p)
             rgb = _truecolor_from_img(data["img"])
-            overlay = _label_overlay(data["lab"], rgb, alpha=overlay_alpha)
-            axes[cell].imshow(overlay)
+            lab_rgb = _label_rgb(data["lab"])
+            ax_rgb, ax_lab = axes[row][pair * 2], axes[row][pair * 2 + 1]
+            ax_rgb.imshow(rgb)
+            ax_lab.imshow(lab_rgb)
+            if row == 0:
+                ax_rgb.set_title("RGB", fontsize=7)
+                ax_lab.set_title("Label", fontsize=7)
 
         title = f"Kelas {cls} — {class_names[cls]}  ({min(n_avail, n_per_class)}/{n_per_class} sample"
         title += f", pool {n_avail})" if n_avail >= n_per_class else f", pool {n_avail} — TAK PENUH)"
-        fig.suptitle(title, fontsize=10)
-        fig.tight_layout()
+        fig.suptitle(title, fontsize=12, y=1.10)
+        fig.legend(handles=legend_handles, loc="upper center", ncol=classes,
+                    fontsize=8, bbox_to_anchor=(0.5, 1.02))
+        fig.tight_layout(rect=(0, 0, 1, 0.90))
 
         if out_dir_p is not None:
             safe = class_names[cls].lower().replace(" ", "_").replace("/", "_")
             fpath = out_dir_p / f"grid_kelas_{cls}_{safe}.png"
-            fig.savefig(fpath, dpi=dpi, bbox_inches="tight")
+            fig.savefig(fpath, dpi=dpi, bbox_inches="tight", facecolor="white")
             _logger.info("Grid disimpan: %s", fpath)
 
         figures.append((cls, fig))
@@ -254,15 +270,12 @@ def _truecolor_from_img(img: "object", *, gain: float = 3.0) -> "object":
     return np.clip(rgb * (gain / 3.0) if gain != 3.0 else rgb, 0.0, 1.0)
 
 
-def _label_overlay(lab: "object", rgb: "object", *, alpha: float = 0.45) -> "object":
-    """Blend overlay warna kelas (PALETTE_RGB) di atas RGB true-color."""
+def _label_rgb(lab: "object") -> "object":
+    """Petakan label kelas (H,W) → citra warna (H,W,3) via ``PALETTE_RGB`` (uint8)."""
     import numpy as np  # noqa: PLC0415
 
     lab = np.asarray(lab)
-    color = np.zeros((*lab.shape, 3), dtype="float32")
+    out = np.zeros((*lab.shape, 3), dtype="uint8")
     for cls, (r, g, b) in PALETTE_RGB.items():
-        m = lab == cls
-        if m.any():
-            color[m] = (r / 255.0, g / 255.0, b / 255.0)
-    rgb = np.asarray(rgb, dtype="float32")
-    return np.clip((1.0 - alpha) * rgb + alpha * color, 0.0, 1.0)
+        out[lab == cls] = (r, g, b)
+    return out

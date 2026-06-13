@@ -119,7 +119,7 @@ def cut_patches(
 
 def list_patches(patch_dir: str | os.PathLike[str]) -> list[Path]:
     """Return list path patch ``.npz`` (sorted)."""
-    return sorted(Path(patch_dir).rglob("p*.npz"))
+    return sorted(Path(patch_dir).rglob("*.npz"))
 
 
 def compute_class_distribution(
