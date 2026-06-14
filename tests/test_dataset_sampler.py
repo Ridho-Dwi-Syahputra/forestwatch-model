@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
+import json
+
 import numpy as np
 
 from forestwatch.data.dataset import compute_patch_sampler_weights
@@ -56,3 +59,45 @@ def test_sampler_weight_cache_roundtrip(tmp_path):
     (d / "p0.npz").unlink()
     w2 = compute_patch_sampler_weights([d / "p0.npz"], cw, cache_path=cache)
     assert w1 == w2
+
+
+def test_sampler_weight_default_max_workers_is_64():
+    # I/O-bound (baca ribuan .npz dari gdrive) -> default tinggi, selaras EDA cell.
+    sig = inspect.signature(compute_patch_sampler_weights)
+    assert sig.parameters["max_workers"].default == 64
+
+
+def test_sampler_weight_incremental_save_no_tmp_left_behind(tmp_path):
+    cw = [1.0] * 7
+    d = tmp_path / "t"
+    d.mkdir()
+    files = []
+    for i in range(4):
+        p = d / f"p{i}.npz"
+        _save_patch(p, np.full((4, 4), i % 7))
+        files.append(p)
+    cache = tmp_path / "shared.json"
+
+    w = compute_patch_sampler_weights(files, cw, cache_path=cache, max_workers=2, save_every=1)
+    assert len(w) == 4
+    assert cache.exists()
+    assert not (tmp_path / "shared.json.tmp").exists()
+    assert len(json.loads(cache.read_text())) == 4
+
+
+def test_sampler_weight_shared_cache_skips_recompute_for_other_model(tmp_path):
+    """Notebook model ke-2/3 pakai cache_path yang SAMA -> patch yg sudah dihitung
+    model pertama tidak dibaca ulang (tetap dapat bobot dari cache)."""
+    cw = [1.0] * 7
+    d = tmp_path / "t"
+    d.mkdir()
+    p0, p1 = d / "p0.npz", d / "p1.npz"
+    _save_patch(p0, np.full((4, 4), 1))
+    _save_patch(p1, np.full((4, 4), 2))
+    cache = tmp_path / "patch_sampler_weights_shared.json"
+
+    w_model1 = compute_patch_sampler_weights([p0, p1], cw, cache_path=cache)
+
+    p0.unlink()  # simulasikan: hanya p1 "baru" buat model kedua
+    w_model2 = compute_patch_sampler_weights([p0, p1], cw, cache_path=cache)
+    assert w_model1 == w_model2

@@ -127,23 +127,30 @@ def compute_patch_sampler_weights(
     *,
     n_classes: int | None = None,
     cache_path: str | os.PathLike[str] | None = None,
-    max_workers: int = 16,
+    max_workers: int = 64,
+    save_every: int = 5000,
 ) -> list[float]:
     """Bobot sampling per-patch untuk ``WeightedRandomSampler`` (oversample kelas langka).
 
     Bobot tiap patch = Σ_c ``class_weights[c]`` · (fraksi piksel kelas c). Patch yang
     banyak memuat kelas langka (bobot kelas tinggi, mis. Sawit/Tambang/Permukiman)
     jadi lebih sering ter-sampling — melengkapi class-weights di loss untuk imbalance
-    berat. Dihitung **paralel** (ThreadPoolExecutor) & **di-cache JSON** per-patch
-    (keyed by path) agar tahan restart sesi Colab.
+    berat. Dihitung **paralel** (ThreadPoolExecutor, I/O-bound -> default 64 worker)
+    dengan progress bar (``tqdm``) & **di-cache JSON** per-patch (keyed by path,
+    ditulis atomik tiap ``save_every`` file selesai) agar tahan restart sesi
+    Colab/lab. ``cache_path`` boleh dipakai **bersama lintas model** (mis. satu file
+    di folder induk ``Model_Comparison/``) — hasil identik selama ``files`` &
+    ``class_weights`` sama, sehingga notebook model ke-2/3 cukup memuat cache yang
+    sudah dihitung model pertama, tanpa baca ulang semua patch.
 
     Returns:
         List bobot float sejajar urutan ``files``.
     """
     import json  # noqa: PLC0415
-    from concurrent.futures import ThreadPoolExecutor  # noqa: PLC0415
+    from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: PLC0415
 
     import numpy as np  # noqa: PLC0415
+    from tqdm.auto import tqdm  # noqa: PLC0415
 
     from forestwatch.constants import N_CLASSES  # noqa: PLC0415
 
@@ -152,10 +159,12 @@ def compute_patch_sampler_weights(
     keys = [f.as_posix() for f in files_p]
     cw = np.asarray(list(class_weights), dtype=np.float64)
 
+    cache_path_p = Path(cache_path) if cache_path is not None else None
     cache: dict[str, float] = {}
-    if cache_path is not None and Path(cache_path).exists():
+    if cache_path_p is not None and cache_path_p.exists():
         try:
-            cache = json.load(open(cache_path))
+            with open(cache_path_p) as fh:
+                cache = json.load(fh)
         except (OSError, ValueError):
             cache = {}
 
@@ -167,12 +176,22 @@ def compute_patch_sampler_weights(
             tot = float(cnt.sum())
             return 1.0 if tot <= 0 else float((cw * (cnt.astype(np.float64) / tot)).sum())
 
+        def _save_cache() -> None:
+            if cache_path_p is None:
+                return
+            cache_path_p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cache_path_p.with_name(cache_path_p.name + ".tmp")
+            with open(tmp, "w") as fh:
+                json.dump(cache, fh)
+            os.replace(tmp, cache_path_p)
+
         with ThreadPoolExecutor(max_workers=max_workers) as exe:
-            for f, w in zip(missing, exe.map(_w, missing), strict=False):
-                cache[f.as_posix()] = w
-        if cache_path is not None:
-            Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
-            json.dump(cache, open(cache_path, "w"))
+            futures = {exe.submit(_w, f): f for f in missing}
+            bar = tqdm(as_completed(futures), total=len(missing), desc="Sampler weights")
+            for i, fut in enumerate(bar, 1):
+                cache[futures[fut].as_posix()] = fut.result()
+                if cache_path_p is not None and (i % save_every == 0 or i == len(missing)):
+                    _save_cache()
 
     weights = [float(cache.get(k, 1.0)) for k in keys]
     if not any(weights):
