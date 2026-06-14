@@ -149,7 +149,7 @@ def compute_class_distribution(
     for f in tqdm(files, desc="Counting classes"):
         lab = np.load(f)["lab"]
         u, c = np.unique(lab, return_counts=True)
-        for cls, cnt in zip(u.tolist(), c.tolist(), strict=False):
+        for cls, cnt in zip(u.tolist(), c.tolist()):
             if 0 <= int(cls) < n_classes:
                 counts[int(cls)] += int(cnt)
     return counts

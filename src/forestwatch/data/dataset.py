@@ -7,7 +7,7 @@ dan split deterministik.
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -168,7 +168,7 @@ def compute_patch_sampler_weights(
         except (OSError, ValueError):
             cache = {}
 
-    missing = [f for f, k in zip(files_p, keys, strict=False) if k not in cache]
+    missing = [f for f, k in zip(files_p, keys) if k not in cache]
     if missing:
         def _w(p: Path) -> float:
             lab = np.load(p)["lab"]
@@ -197,6 +197,195 @@ def compute_patch_sampler_weights(
     if not any(weights):
         weights = [1.0] * len(weights)
     return weights
+
+
+def _chunk_items(
+    items: list[tuple[str, Path]], n_parts: int
+) -> list[list[tuple[str, Path]]]:
+    """Bagi ``items`` jadi maksimal ``n_parts`` potongan berurutan (ukuran serata
+    mungkin). Potongan kosong dibuang -> hasil bisa < ``n_parts`` bila
+    ``len(items) < n_parts``."""
+    if n_parts <= 1 or not items:
+        return [items]
+    base, rem = divmod(len(items), n_parts)
+    chunks: list[list[tuple[str, Path]]] = []
+    start = 0
+    for i in range(n_parts):
+        size = base + (1 if i < rem else 0)
+        if size == 0:
+            continue
+        chunks.append(items[start : start + size])
+        start += size
+    return chunks
+
+
+def create_dataset_archives(
+    splits: Mapping[str, Sequence[tuple[str, str | os.PathLike[str]]]],
+    out_dir: str | os.PathLike[str],
+    *,
+    n_train_parts: int = 1,
+) -> dict[str, list[Path]]:
+    """Bundel patch per-split (untuk ``"train"`` harus sudah augmentasi) jadi ``.tar``.
+
+    Mengatasi bottleneck I/O FUSE/rclone (ratusan-ribu file ``.npz`` kecil di
+    gdrive) dengan membungkusnya jadi sedikit arsip besar -> sekali ditulis ke
+    gdrive, lalu tiap sesi training cukup copy+extract cepat ke disk lokal
+    (lihat :func:`extract_dataset_archives`).
+
+    Layout hasil::
+
+        out_dir/
+          train/train_part01.tar .. train_part{n_train_parts:02d}.tar
+          val/val_part01.tar
+          test/test_part01.tar
+
+    Args:
+        splits: Mapping nama split (``"train"``/``"val"``/``"test"``) -> daftar
+            ``(arcname, source_path)``. ``arcname`` = path relatif di dalam tar
+            (mis. ``"papua/tile_000/p00001.npz"``). Untuk split ``"train"``,
+            ``source_path`` harus berasal dari ``final_train_files`` (hasil
+            **setelah** augmentasi offline), bukan patch mentah.
+        out_dir: Folder gdrive tujuan (mis. ``DRIVE_ROOT / 'Bahan_Training_Model'``).
+        n_train_parts: Jumlah pecahan ``.tar`` untuk split ``"train"`` (split lain
+            selalu 1 file). Memudahkan distribusi/training paralel di beberapa mesin.
+
+    Returns:
+        Mapping nama split -> daftar path ``.tar`` (sudah ada atau baru dibuat).
+
+    Idempoten & restart-safe: ``.tar`` final yang sudah ada dilewati (tidak
+    ditulis ulang). Penulisan lewat file sementara ber-nama unik per-proses
+    (``*.tar.<pid>.part``) + ``os.replace`` atomik -- aman dipanggil bersamaan
+    dari beberapa mesin (tak ada tabrakan nama tmp -> tak ada ``.tar`` korup),
+    dan sesi yang terhenti otomatis mengulang part tersebut dari awal pada
+    proses berikutnya (sisa ``*.<pid>.part`` jadi file sampah tak berbahaya,
+    tidak ikut terbaca :func:`extract_dataset_archives`).
+    """
+    import tarfile  # noqa: PLC0415
+
+    out_dir = Path(out_dir)
+    result: dict[str, list[Path]] = {}
+    for split_name, items in splits.items():
+        items_p = [(arcname, Path(src)) for arcname, src in items]
+        split_dir = out_dir / split_name
+        split_dir.mkdir(parents=True, exist_ok=True)
+
+        n_parts = n_train_parts if split_name == "train" else 1
+        chunks = _chunk_items(items_p, max(1, n_parts))
+
+        tar_paths: list[Path] = []
+        for i, chunk in enumerate(chunks, start=1):
+            tar_path = split_dir / f"{split_name}_part{i:02d}.tar"
+            tar_paths.append(tar_path)
+            if tar_path.exists():
+                continue
+            tmp_path = tar_path.with_name(f"{tar_path.name}.{os.getpid()}.part")
+            with tarfile.open(tmp_path, "w") as tf:
+                for arcname, src in chunk:
+                    tf.add(str(src), arcname=arcname)
+            os.replace(tmp_path, tar_path)
+        result[split_name] = tar_paths
+    return result
+
+
+def _safe_tar_members(tf):
+    """Filter member tar sebelum ``extractall``: buang symlink/hardlink & path
+    absolut/``..`` (anti path-traversal). Tar di sini selalu hasil
+    :func:`create_dataset_archives` sendiri, tapi pengecekan ini murah dan
+    portabel ke semua versi Python (parameter ``filter=`` baru ada di 3.12+)."""
+    safe = []
+    for member in tf.getmembers():
+        if member.issym() or member.islnk():
+            continue
+        if member.name.startswith(("/", "\\")) or ".." in Path(member.name).parts:
+            continue
+        safe.append(member)
+    return safe
+
+
+def extract_dataset_archives(
+    bahan_dir: str | os.PathLike[str],
+    local_dir: str | os.PathLike[str],
+    *,
+    splits: Sequence[str] = ("train", "val", "test"),
+    overwrite: bool = False,
+    min_free_ratio: float = 1.1,
+) -> dict[str, Path]:
+    """Ekstrak arsip ``.tar`` (lihat :func:`create_dataset_archives`) ke disk lokal.
+
+    Args:
+        bahan_dir: Folder gdrive berisi ``train/``, ``val/``, ``test/`` (masing-masing
+            berisi ``<split>_part*.tar``).
+        local_dir: Folder disk lokal tujuan (mis. ``Path.home() / 'dataset_local'``).
+        splits: Nama split yang diekstrak.
+        overwrite: Paksa ekstrak ulang meski marker ``.extracted_ok`` sudah ada.
+        min_free_ratio: Margin aman dibanding ukuran data tak terkompresi sebelum
+            mulai ekstrak (default 1.1x).
+
+    Returns:
+        Mapping nama split -> folder lokal hasil ekstraksi (``local_dir/<split>``).
+
+    Raises:
+        FileNotFoundError: Tidak ada ``.tar`` untuk salah satu split yang diminta
+            (jalankan :func:`create_dataset_archives` dahulu).
+        OSError: Disk lokal tidak cukup untuk hasil ekstraksi -- dicek lebih dulu,
+            sebelum menulis apa pun ke ``local_dir``.
+
+    Idempoten: split yang sudah punya marker ``local_dir/<split>/.extracted_ok``
+    dilewati, kecuali ``overwrite=True``. Restart-safe untuk sesi Colab/lab yang
+    sering terputus.
+    """
+    import shutil  # noqa: PLC0415
+    import tarfile  # noqa: PLC0415
+
+    bahan_dir = Path(bahan_dir)
+    local_dir = Path(local_dir)
+
+    tar_paths_by_split: dict[str, list[Path]] = {}
+    for split_name in splits:
+        tar_paths = sorted((bahan_dir / split_name).glob(f"{split_name}_part*.tar"))
+        if not tar_paths:
+            raise FileNotFoundError(
+                f"Tidak ada arsip .tar di {bahan_dir / split_name}. "
+                "Jalankan create_dataset_archives dahulu."
+            )
+        tar_paths_by_split[split_name] = tar_paths
+
+    pending = {
+        split_name: tar_paths
+        for split_name, tar_paths in tar_paths_by_split.items()
+        if overwrite or not (local_dir / split_name / ".extracted_ok").exists()
+    }
+
+    if pending:
+        needed = 0
+        for tar_paths in pending.values():
+            for tar_path in tar_paths:
+                with tarfile.open(tar_path, "r") as tf:
+                    needed += sum(m.size for m in tf.getmembers())
+
+        local_dir.mkdir(parents=True, exist_ok=True)
+        free = shutil.disk_usage(local_dir).free
+        if needed * min_free_ratio > free:
+            raise OSError(
+                f"Disk lokal tidak cukup untuk ekstrak dataset: butuh ~"
+                f"{needed / 1e9:.2f} GB (margin x{min_free_ratio}), tersedia "
+                f"{free / 1e9:.2f} GB di {local_dir}."
+            )
+
+    result: dict[str, Path] = {}
+    for split_name, tar_paths in tar_paths_by_split.items():
+        split_dst = local_dir / split_name
+        marker = split_dst / ".extracted_ok"
+        if marker.exists() and not overwrite:
+            result[split_name] = split_dst
+            continue
+        split_dst.mkdir(parents=True, exist_ok=True)
+        for tar_path in tar_paths:
+            with tarfile.open(tar_path, "r") as tf:
+                tf.extractall(split_dst, members=_safe_tar_members(tf))
+        marker.write_text("ok", encoding="utf-8")
+        result[split_name] = split_dst
+    return result
 
 
 def _loaders_from_split(

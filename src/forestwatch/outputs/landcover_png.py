@@ -139,7 +139,7 @@ def compute_per_class_area_ha(
     if len(class_names) != n_classes:
         raise ValueError(f"class_names harus panjang {n_classes}.")
     u, c = np.unique(mask, return_counts=True)
-    by_id: dict[int, int] = dict(zip(u.tolist(), c.tolist(), strict=False))
+    by_id: dict[int, int] = dict(zip(u.tolist(), c.tolist()))
     out: dict[str, float] = {}
     for cls in range(n_classes):
         n_pix = int(by_id.get(cls, 0))
