@@ -27,7 +27,8 @@ def build_unet(
     """Build U-Net (atau variant) dari segmentation-models-pytorch.
 
     Args:
-        architecture: ``"unet"`` (default) atau ``"unet_scse"`` (attention).
+        architecture: ``"unet"`` (default), ``"unet_scse"`` (Attention U-Net),
+            ``"unetpp"`` (U-Net++), atau ``"deeplabv3plus"`` (DeepLabV3+).
         encoder_name: Backbone encoder (default ``resnet50``).
         encoder_weights: ``"imagenet"`` untuk transfer learning, ``None`` untuk scratch.
         in_channels: Jumlah band input (6 untuk Sentinel-2 sesuai PRD).
@@ -63,8 +64,13 @@ def build_unet(
         return smp.Unet(decoder_attention_type="scse", **common_kwargs)
     if architecture == "unetpp" or architecture == "unetplusplus":
         return smp.UnetPlusPlus(**common_kwargs)
+    if architecture in ("deeplabv3plus", "deeplabv3+", "deeplabv3p"):
+        # DeepLabV3+ (SLR Tabel 6: OA ~96%, IoU ~0.91) — atrous spatial pyramid
+        # pooling, bagus untuk pola deforestasi tak beraturan.
+        return smp.DeepLabV3Plus(**common_kwargs)
     raise ValueError(
-        f"Architecture '{architecture}' tidak dikenal. Pilih: unet | unet_scse | unetpp"
+        f"Architecture '{architecture}' tidak dikenal. "
+        "Pilih: unet | unet_scse | unetpp | deeplabv3plus"
     )
 
 
