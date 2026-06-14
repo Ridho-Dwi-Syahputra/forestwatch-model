@@ -305,7 +305,7 @@ def _per_class_area_from_mask(mask: "Any", pixel_area_ha: float) -> dict[str, fl
     import numpy as np  # noqa: PLC0415
 
     u, c = np.unique(mask, return_counts=True)
-    by_id = dict(zip(u.tolist(), c.tolist(), strict=False))
+    by_id = dict(zip(u.tolist(), c.tolist()))
     out: dict[str, float] = {}
     for cls in range(len(CLASS_NAMES)):
         out[CLASS_NAMES[cls]] = round(by_id.get(cls, 0) * pixel_area_ha, 1)
