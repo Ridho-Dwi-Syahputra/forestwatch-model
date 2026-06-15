@@ -136,11 +136,15 @@ def compute_patch_sampler_weights(
     banyak memuat kelas langka (bobot kelas tinggi, mis. Sawit/Tambang/Permukiman)
     jadi lebih sering ter-sampling — melengkapi class-weights di loss untuk imbalance
     berat. Dihitung **paralel** (ThreadPoolExecutor, I/O-bound -> default 64 worker)
-    dengan progress bar (``tqdm``) & **di-cache JSON** per-patch (keyed by path,
-    ditulis atomik tiap ``save_every`` file selesai) agar tahan restart sesi
-    Colab/lab. ``cache_path`` boleh dipakai **bersama lintas model** (mis. satu file
-    di folder induk ``Model_Comparison/``) — hasil identik selama ``files`` &
-    ``class_weights`` sama, sehingga notebook model ke-2/3 cukup memuat cache yang
+    dengan progress bar (``tqdm``) & **di-cache JSON** per-patch (keyed by
+    ``"<folder_induk>/<nama_file>"``, ditulis atomik tiap ``save_every`` file
+    selesai) agar tahan restart sesi Colab/lab. Key relatif (bukan absolute path)
+    supaya cache **portable lintas mesin** (mis. dihitung di komputer lab lalu
+    cache JSON-nya dipindah ke Mac dengan ``LOCAL_DATA_DIR`` berbeda — key tetap
+    cocok selama struktur ``<split>/<sumber>/<file>.npz`` sama). ``cache_path``
+    boleh dipakai **bersama lintas model** (mis. satu file di
+    ``Bahan_Training_Model/``) — hasil identik selama ``files`` & ``class_weights``
+    sama, sehingga notebook model ke-2/3 (atau mesin lain) cukup memuat cache yang
     sudah dihitung model pertama, tanpa baca ulang semua patch.
 
     Returns:
@@ -156,7 +160,8 @@ def compute_patch_sampler_weights(
 
     n_classes = n_classes or N_CLASSES
     files_p = [Path(f) for f in files]
-    keys = [f.as_posix() for f in files_p]
+    key_by_path = {f: "/".join(f.parts[-2:]) for f in files_p}
+    keys = [key_by_path[f] for f in files_p]
     cw = np.asarray(list(class_weights), dtype=np.float64)
 
     cache_path_p = Path(cache_path) if cache_path is not None else None
@@ -189,7 +194,7 @@ def compute_patch_sampler_weights(
             futures = {exe.submit(_w, f): f for f in missing}
             bar = tqdm(as_completed(futures), total=len(missing), desc="Sampler weights")
             for i, fut in enumerate(bar, 1):
-                cache[futures[fut].as_posix()] = fut.result()
+                cache[key_by_path[futures[fut]]] = fut.result()
                 if cache_path_p is not None and (i % save_every == 0 or i == len(missing)):
                     _save_cache()
 
@@ -262,6 +267,8 @@ def create_dataset_archives(
     """
     import tarfile  # noqa: PLC0415
 
+    from tqdm.auto import tqdm  # noqa: PLC0415
+
     out_dir = Path(out_dir)
     result: dict[str, list[Path]] = {}
     for split_name, items in splits.items():
@@ -279,8 +286,9 @@ def create_dataset_archives(
             if tar_path.exists():
                 continue
             tmp_path = tar_path.with_name(f"{tar_path.name}.{os.getpid()}.part")
+            desc = f"Bundling {split_name}_part{i:02d}"
             with tarfile.open(tmp_path, "w") as tf:
-                for arcname, src in chunk:
+                for arcname, src in tqdm(chunk, desc=desc, unit="file"):
                     tf.add(str(src), arcname=arcname)
             os.replace(tmp_path, tar_path)
         result[split_name] = tar_paths
@@ -337,6 +345,8 @@ def extract_dataset_archives(
     import shutil  # noqa: PLC0415
     import tarfile  # noqa: PLC0415
 
+    from tqdm.auto import tqdm  # noqa: PLC0415
+
     bahan_dir = Path(bahan_dir)
     local_dir = Path(local_dir)
 
@@ -382,7 +392,9 @@ def extract_dataset_archives(
         split_dst.mkdir(parents=True, exist_ok=True)
         for tar_path in tar_paths:
             with tarfile.open(tar_path, "r") as tf:
-                tf.extractall(split_dst, members=_safe_tar_members(tf))
+                members = _safe_tar_members(tf)
+                for member in tqdm(members, desc=f"Extract {tar_path.name}", unit="file"):
+                    tf.extract(member, split_dst)
         marker.write_text("ok", encoding="utf-8")
         result[split_name] = split_dst
     return result

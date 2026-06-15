@@ -101,3 +101,25 @@ def test_sampler_weight_shared_cache_skips_recompute_for_other_model(tmp_path):
     p0.unlink()  # simulasikan: hanya p1 "baru" buat model kedua
     w_model2 = compute_patch_sampler_weights([p0, p1], cw, cache_path=cache)
     assert w_model1 == w_model2
+
+
+def test_sampler_weight_cache_portable_across_absolute_roots(tmp_path):
+    """Cache dihitung di "mesin A" (root absolute X) harus tetap kepakai di
+    "mesin B" (root absolute Y berbeda, mis. lab Windows vs Mac) selama struktur
+    relatif ``<sumber>/<file>.npz`` sama -> key cache berbasis path relatif,
+    bukan absolute path."""
+    cw = [1.0] * 7
+    cache = tmp_path / "patch_sampler_weights_shared.json"
+
+    root_a = tmp_path / "dataset_local_lab" / "train" / "papua"
+    root_a.mkdir(parents=True)
+    _save_patch(root_a / "p0.npz", np.full((4, 4), 3))
+    w_a = compute_patch_sampler_weights([root_a / "p0.npz"], cw, cache_path=cache)
+
+    # "Mac": root absolute berbeda total, tapi folder induk/nama file sama (papua/p0.npz).
+    root_b = tmp_path / "Users" / "mac" / "dataset_local" / "train" / "papua"
+    root_b.mkdir(parents=True)
+    _save_patch(root_b / "p0.npz", np.full((4, 4), 1))  # isi beda -> buktikan TIDAK dibaca ulang
+
+    w_b = compute_patch_sampler_weights([root_b / "p0.npz"], cw, cache_path=cache)
+    assert w_b == w_a
