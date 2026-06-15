@@ -123,3 +123,25 @@ def test_sampler_weight_cache_portable_across_absolute_roots(tmp_path):
 
     w_b = compute_patch_sampler_weights([root_b / "p0.npz"], cw, cache_path=cache)
     assert w_b == w_a
+
+
+def test_sampler_weight_no_collision_between_papua_and_transfer_tile(tmp_path):
+    """``ForestWatch_Patches/tile_003/p00001.npz`` (papua) dan
+    ``ForestWatch_Patches_Transfer/tambang/tile_003/p00001.npz`` (transfer) punya
+    2 komponen path terakhir IDENTIK (``tile_003/p00001.npz``) tapi adalah patch
+    BERBEDA -> key cache harus pakai >=3 komponen agar tidak kolusi (dapat bobot
+    yang sama padahal label berbeda)."""
+    cw = [0.8, 0.4, 2.0, 2.0, 1.0, 2.5, 2.5]
+
+    papua = tmp_path / "train" / "papua" / "tile_003"
+    papua.mkdir(parents=True)
+    _save_patch(papua / "p00001.npz", np.full((4, 4), 1))  # Hutan -> bobot 0.4
+
+    transfer = tmp_path / "train" / "transfer" / "tambang" / "tile_003"
+    transfer.mkdir(parents=True)
+    _save_patch(transfer / "p00001.npz", np.full((4, 4), 5))  # Tambang -> bobot 2.5
+
+    files = [papua / "p00001.npz", transfer / "p00001.npz"]
+    w = compute_patch_sampler_weights(files, cw)
+    assert abs(w[0] - 0.4) < 1e-6
+    assert abs(w[1] - 2.5) < 1e-6

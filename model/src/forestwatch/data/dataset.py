@@ -137,11 +137,15 @@ def compute_patch_sampler_weights(
     jadi lebih sering ter-sampling — melengkapi class-weights di loss untuk imbalance
     berat. Dihitung **paralel** (ThreadPoolExecutor, I/O-bound -> default 64 worker)
     dengan progress bar (``tqdm``) & **di-cache JSON** per-patch (keyed by
-    ``"<folder_induk>/<nama_file>"``, ditulis atomik tiap ``save_every`` file
+    ``"<3 komponen path terakhir>"``, mis. ``"papua/tile_003/p00001.npz"`` atau
+    ``"tambang/tile_003/p00001.npz"``, ditulis atomik tiap ``save_every`` file
     selesai) agar tahan restart sesi Colab/lab. Key relatif (bukan absolute path)
     supaya cache **portable lintas mesin** (mis. dihitung di komputer lab lalu
     cache JSON-nya dipindah ke Mac dengan ``LOCAL_DATA_DIR`` berbeda — key tetap
-    cocok selama struktur ``<split>/<sumber>/<file>.npz`` sama). ``cache_path``
+    cocok selama struktur ``<split>/<sumber>/[<slug>/]<file>.npz`` sama). Pakai 3
+    komponen (bukan 2) agar tak kolusi antara ``papua/tile_003/p00001.npz`` dan
+    ``transfer/tambang/tile_003/p00001.npz`` yang sama-sama berakhiran
+    ``tile_003/p00001.npz``. ``cache_path``
     boleh dipakai **bersama lintas model** (mis. satu file di
     ``Bahan_Training_Model/``) — hasil identik selama ``files`` & ``class_weights``
     sama, sehingga notebook model ke-2/3 (atau mesin lain) cukup memuat cache yang
@@ -160,7 +164,7 @@ def compute_patch_sampler_weights(
 
     n_classes = n_classes or N_CLASSES
     files_p = [Path(f) for f in files]
-    key_by_path = {f: "/".join(f.parts[-2:]) for f in files_p}
+    key_by_path = {f: "/".join(f.parts[-3:]) for f in files_p}
     keys = [key_by_path[f] for f in files_p]
     cw = np.asarray(list(class_weights), dtype=np.float64)
 
