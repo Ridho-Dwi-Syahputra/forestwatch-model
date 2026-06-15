@@ -229,6 +229,7 @@ def create_dataset_archives(
     out_dir: str | os.PathLike[str],
     *,
     n_train_parts: int = 1,
+    max_workers: int = 32,
 ) -> dict[str, list[Path]]:
     """Bundel patch per-split (untuk ``"train"`` harus sudah augmentasi) jadi ``.tar``.
 
@@ -253,6 +254,11 @@ def create_dataset_archives(
         out_dir: Folder gdrive tujuan (mis. ``DRIVE_ROOT / 'Bahan_Training_Model'``).
         n_train_parts: Jumlah pecahan ``.tar`` untuk split ``"train"`` (split lain
             selalu 1 file). Memudahkan distribusi/training paralel di beberapa mesin.
+        max_workers: Jumlah thread pembaca file sumber paralel (I/O-bound -- file
+            sumber ada di gdrive/FUSE, latensi per-open dominan). Penulisan ke
+            ``.tar`` sendiri tetap sekuensial (satu file tar tak bisa ditulis
+            bersamaan), tapi pembacaan ratusan-ribu file kecil jadi paralel ->
+            mempercepat proses bundling.
 
     Returns:
         Mapping nama split -> daftar path ``.tar`` (sudah ada atau baru dibuat).
@@ -265,7 +271,9 @@ def create_dataset_archives(
     proses berikutnya (sisa ``*.<pid>.part`` jadi file sampah tak berbahaya,
     tidak ikut terbaca :func:`extract_dataset_archives`).
     """
+    import io  # noqa: PLC0415
     import tarfile  # noqa: PLC0415
+    from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: PLC0415
 
     from tqdm.auto import tqdm  # noqa: PLC0415
 
@@ -287,9 +295,21 @@ def create_dataset_archives(
                 continue
             tmp_path = tar_path.with_name(f"{tar_path.name}.{os.getpid()}.part")
             desc = f"Bundling {split_name}_part{i:02d}"
-            with tarfile.open(tmp_path, "w") as tf:
-                for arcname, src in tqdm(chunk, desc=desc, unit="file"):
-                    tf.add(str(src), arcname=arcname)
+            # Baca file sumber paralel (batch kecil agar memori terbatas), tulis
+            # ke tar sekuensial begitu tiap batch selesai dibaca.
+            batch_size = max(1, max_workers) * 4
+            with tarfile.open(tmp_path, "w") as tf, tqdm(total=len(chunk), desc=desc, unit="file") as bar:
+                with ThreadPoolExecutor(max_workers=max_workers) as exe:
+                    for start in range(0, len(chunk), batch_size):
+                        batch = chunk[start : start + batch_size]
+                        futures = {exe.submit(lambda p: Path(p).read_bytes(), src): (arcname, src) for arcname, src in batch}
+                        for fut in as_completed(futures):
+                            arcname, src = futures[fut]
+                            data = fut.result()
+                            info = tf.gettarinfo(str(src), arcname=arcname)
+                            info.size = len(data)
+                            tf.addfile(info, io.BytesIO(data))
+                            bar.update(1)
             os.replace(tmp_path, tar_path)
         result[split_name] = tar_paths
     return result
@@ -310,6 +330,17 @@ def _safe_tar_members(tf):
     return safe
 
 
+def _extract_member(dst_dir: Path, member, data: bytes | None, bar) -> None:
+    """Tulis satu member tar ke ``dst_dir`` (dipanggil dari thread pool)."""
+    target = dst_dir / member.name
+    if member.isdir():
+        target.mkdir(parents=True, exist_ok=True)
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data or b"")
+    bar.update(1)
+
+
 def extract_dataset_archives(
     bahan_dir: str | os.PathLike[str],
     local_dir: str | os.PathLike[str],
@@ -317,6 +348,7 @@ def extract_dataset_archives(
     splits: Sequence[str] = ("train", "val", "test"),
     overwrite: bool = False,
     min_free_ratio: float = 1.1,
+    max_workers: int = 32,
 ) -> dict[str, Path]:
     """Ekstrak arsip ``.tar`` (lihat :func:`create_dataset_archives`) ke disk lokal.
 
@@ -328,6 +360,10 @@ def extract_dataset_archives(
         overwrite: Paksa ekstrak ulang meski marker ``.extracted_ok`` sudah ada.
         min_free_ratio: Margin aman dibanding ukuran data tak terkompresi sebelum
             mulai ekstrak (default 1.1x).
+        max_workers: Jumlah thread penulis file paralel ke disk lokal (member
+            dibaca sekuensial dari ``.tar`` -- satu file tar tak bisa dibaca
+            bersamaan -- tapi penulisan ratusan-ribu file kecil ke disk lokal
+            jadi paralel -> mempercepat proses ekstraksi).
 
     Returns:
         Mapping nama split -> folder lokal hasil ekstraksi (``local_dir/<split>``).
@@ -344,6 +380,7 @@ def extract_dataset_archives(
     """
     import shutil  # noqa: PLC0415
     import tarfile  # noqa: PLC0415
+    from concurrent.futures import ThreadPoolExecutor  # noqa: PLC0415
 
     from tqdm.auto import tqdm  # noqa: PLC0415
 
@@ -391,10 +428,17 @@ def extract_dataset_archives(
             continue
         split_dst.mkdir(parents=True, exist_ok=True)
         for tar_path in tar_paths:
-            with tarfile.open(tar_path, "r") as tf:
+            with tarfile.open(tar_path, "r") as tf, ThreadPoolExecutor(max_workers=max_workers) as exe:
                 members = _safe_tar_members(tf)
-                for member in tqdm(members, desc=f"Extract {tar_path.name}", unit="file"):
-                    tf.extract(member, split_dst)
+                bar = tqdm(total=len(members), desc=f"Extract {tar_path.name}", unit="file")
+                futures = []
+                for member in members:
+                    extracted = tf.extractfile(member)
+                    data = extracted.read() if extracted is not None else None
+                    futures.append(exe.submit(_extract_member, split_dst, member, data, bar))
+                for fut in futures:
+                    fut.result()
+                bar.close()
         marker.write_text("ok", encoding="utf-8")
         result[split_name] = split_dst
     return result
