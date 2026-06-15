@@ -1,6 +1,12 @@
 # Production dependencies — pin minor untuk reproduktibilitas
 # Install: pip install -r requirements.txt
 # Atau lebih baik: pip install -e ".[all]"
+#
+# JETSON ORIN (JetPack 5.x / Python 3.8 / torch 2.1): JANGAN pakai file ini.
+# torch/torchvision/onnxruntime disediakan JetPack (wheel aarch64+CUDA dari NVIDIA);
+# meng-install ulang via pip akan menimpa build CUDA. Di Jetson cukup:
+#     pip install -e ".[jetson]"      # smp, albumentations, torchmetrics, sklearn, matplotlib, onnx
+# (torch 2.1 bawaan JetPack sudah memenuhi pin segmentation-models-pytorch.)
 
 # Core (selalu)
 numpy>=1.24,<3

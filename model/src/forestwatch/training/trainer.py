@@ -90,11 +90,20 @@ def train(
     """
     try:
         import torch  # noqa: PLC0415
-        from torch.amp import GradScaler, autocast  # noqa: PLC0415
+        from torch.amp import autocast  # noqa: PLC0415  (autocast ada sejak torch 1.10)
         from torchmetrics.classification import MulticlassJaccardIndex  # noqa: PLC0415
         from tqdm import tqdm  # noqa: PLC0415
     except ImportError as e:
         raise ImportError("Butuh torch + torchmetrics + tqdm. Install: pip install -e \".[ml]\"") from e
+
+    # GradScaler generik (device positional) baru ada di torch >= 2.4. Di torch < 2.4
+    # (mis. Jetson Orin / JetPack 5.x -> torch 2.1) pakai torch.cuda.amp.GradScaler.
+    try:
+        from torch.amp import GradScaler  # noqa: PLC0415  (torch >= 2.4)
+        _GRADSCALER_NEW = True
+    except ImportError:
+        from torch.cuda.amp import GradScaler  # noqa: PLC0415  (torch < 2.4)
+        _GRADSCALER_NEW = False
 
     cfg = cfg or TrainConfig()
     set_seed(cfg.seed)
@@ -130,7 +139,7 @@ def train(
         if cfg.log_per_class_iou else None
     )
 
-    scaler = GradScaler(device_t.type) if use_amp else None
+    scaler = (GradScaler(device_t.type) if _GRADSCALER_NEW else GradScaler()) if use_amp else None
     best_iou = 0.0
     best_epoch = -1
     wait = 0

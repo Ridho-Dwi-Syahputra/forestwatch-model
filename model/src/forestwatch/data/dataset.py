@@ -129,6 +129,7 @@ def compute_patch_sampler_weights(
     cache_path: str | os.PathLike[str] | None = None,
     max_workers: int = 64,
     save_every: int = 5000,
+    keys: Sequence[str] | None = None,
 ) -> list[float]:
     """Bobot sampling per-patch untuk ``WeightedRandomSampler`` (oversample kelas langka).
 
@@ -151,6 +152,15 @@ def compute_patch_sampler_weights(
     sama, sehingga notebook model ke-2/3 (atau mesin lain) cukup memuat cache yang
     sudah dihitung model pertama, tanpa baca ulang semua patch.
 
+    Args:
+        keys: Override key cache per-``files`` (harus sejajar panjang). Berguna saat
+            ``files`` adalah path SUMBER (mis. Drive ``ForestWatch_Patches*`` di Colab,
+            sebelum bundling/ekstraksi) tapi key harus cocok dengan path HASIL EKSTRAK
+            (``train/<sumber>/[<kelas>/]tile_xxx/p*.npz``) yang dipakai PC/Jetson —
+            mis. ``"/".join(Path("train", arcname).parts[-3:])`` dari ``arcname``
+            :func:`create_dataset_archives`. Default ``None`` -> key dari
+            ``"/".join(f.parts[-3:])`` masing-masing ``files``.
+
     Returns:
         List bobot float sejajar urutan ``files``.
     """
@@ -164,8 +174,13 @@ def compute_patch_sampler_weights(
 
     n_classes = n_classes or N_CLASSES
     files_p = [Path(f) for f in files]
-    key_by_path = {f: "/".join(f.parts[-3:]) for f in files_p}
-    keys = [key_by_path[f] for f in files_p]
+    if keys is not None:
+        if len(keys) != len(files_p):
+            raise ValueError("keys harus sejajar panjang dengan files")
+        keys = list(keys)
+    else:
+        keys = ["/".join(f.parts[-3:]) for f in files_p]
+    key_by_path = dict(zip(files_p, keys))
     cw = np.asarray(list(class_weights), dtype=np.float64)
 
     cache_path_p = Path(cache_path) if cache_path is not None else None

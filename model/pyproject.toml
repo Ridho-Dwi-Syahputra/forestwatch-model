@@ -7,7 +7,7 @@ name = "forestwatch"
 version = "0.1.0"
 description = "ForestWatch Papua - segmentasi tutupan lahan & deteksi deforestasi berbasis Sentinel-2"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"   # 3.8 utk Jetson Orin / JetPack 5.x (Ubuntu 20.04)
 license = { text = "MIT" }
 authors = [
     { name = "ForestWatch Papua Team (Universitas Andalas)" },
@@ -15,6 +15,8 @@ authors = [
 keywords = ["remote-sensing", "deforestation", "papua", "sentinel-2", "deep-learning", "satria-data"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
@@ -50,6 +52,17 @@ ml = [
     "matplotlib>=3.7",
     "onnx>=1.15",
     "onnxruntime>=1.16",
+]
+# Jetson Orin (JetPack 5.x): torch/torchvision/onnxruntime DISEDIAKAN JetPack (wheel
+# aarch64+CUDA dari NVIDIA) -- JANGAN di-install via pip (akan menimpa build CUDA).
+# Install deps ML lain saja: pip install -e ".[jetson]". torch 2.1 JetPack memenuhi pin smp.
+jetson = [
+    "segmentation-models-pytorch>=0.3.3",
+    "albumentations>=1.3",
+    "torchmetrics>=1.2",
+    "scikit-learn>=1.3",
+    "matplotlib>=3.7",
+    "onnx>=1.15",
 ]
 dev = [
     "pytest>=7.4",
@@ -89,7 +102,7 @@ markers = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py38"   # selaras requires-python; cegah auto-fix UP menyuntik sintaks py310
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM"]

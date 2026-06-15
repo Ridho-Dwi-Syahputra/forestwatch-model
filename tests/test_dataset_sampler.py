@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -123,6 +124,47 @@ def test_sampler_weight_cache_portable_across_absolute_roots(tmp_path):
 
     w_b = compute_patch_sampler_weights([root_b / "p0.npz"], cw, cache_path=cache)
     assert w_b == w_a
+
+
+def test_sampler_weight_custom_keys_match_extracted_layout(tmp_path):
+    """``keys=`` dipakai saat ``files`` masih path SUMBER (Drive, sebelum ekstrak)
+    tapi key cache harus cocok dengan path HASIL EKSTRAK (``train/<sumber>/...``)
+    yang dipakai PC/Jetson -> cache yang dihitung dari sumber (mis. di Colab) bisa
+    di-hit ulang oleh sisi PC/Jetson yang baca dari path hasil ekstrak."""
+    cw = [0.8, 0.4, 2.0, 2.0, 1.0, 2.5, 2.5]
+    cache = tmp_path / "patch_sampler_weights_shared.json"
+
+    # "Colab": path sumber Drive, struktur beda total dari hasil ekstrak.
+    src_root = tmp_path / "drive" / "ForestWatch_Patches" / "tile_003"
+    src_root.mkdir(parents=True)
+    _save_patch(src_root / "p00001.npz", np.full((4, 4), 1))  # Hutan -> bobot 0.4
+
+    src_file = src_root / "p00001.npz"
+    arcname = "papua/tile_003/p00001.npz"  # arcname create_dataset_archives
+    key = "/".join((Path("train") / arcname).parts[-3:])
+    w_colab = compute_patch_sampler_weights([src_file], cw, cache_path=cache, keys=[key])
+    assert abs(w_colab[0] - 0.4) < 1e-6
+
+    # "PC": path hasil ekstrak (train/papua/tile_003/p00001.npz), key default parts[-3:]
+    # harus SAMA -> cache hit, tidak baca ulang (isi file beda -> buktikan dari cache).
+    extracted = tmp_path / "dataset_local" / "train" / "papua" / "tile_003"
+    extracted.mkdir(parents=True)
+    _save_patch(extracted / "p00001.npz", np.full((4, 4), 5))  # isi beda (Tambang)
+
+    w_pc = compute_patch_sampler_weights([extracted / "p00001.npz"], cw, cache_path=cache)
+    assert w_pc == w_colab  # dari cache, bukan dibaca ulang (kalau dibaca ulang -> 2.5)
+
+
+def test_sampler_weight_keys_length_mismatch_raises(tmp_path):
+    cw = [1.0] * 7
+    d = tmp_path / "t"
+    d.mkdir()
+    _save_patch(d / "p0.npz", np.full((4, 4), 1))
+
+    import pytest
+
+    with pytest.raises(ValueError):
+        compute_patch_sampler_weights([d / "p0.npz"], cw, keys=["a/b/c", "d/e/f"])
 
 
 def test_sampler_weight_no_collision_between_papua_and_transfer_tile(tmp_path):
