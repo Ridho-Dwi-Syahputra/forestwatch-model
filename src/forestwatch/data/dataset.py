@@ -473,6 +473,7 @@ def _loaders_from_split(
     augment_p: dict[str, float] | None,
     class_weights: Sequence[float] | None,
     sampler_cache: str | os.PathLike[str] | None,
+    sampler_keys: Sequence[str] | None = None,
     persistent_workers: bool = False,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
     from torch.utils.data import DataLoader, WeightedRandomSampler  # noqa: PLC0415
@@ -485,7 +486,7 @@ def _loaders_from_split(
     train_ds = PapuaDataset(train_f, train=True, augment_p=augment_p)
     if class_weights is not None:
         # Oversample patch kelas langka via WeightedRandomSampler (anti-imbalance).
-        w = compute_patch_sampler_weights(train_f, class_weights, cache_path=sampler_cache)
+        w = compute_patch_sampler_weights(train_f, class_weights, cache_path=sampler_cache, keys=sampler_keys)
         sampler = WeightedRandomSampler(
             weights=w, num_samples=len(train_f), replacement=True
         )
@@ -593,6 +594,7 @@ def build_dataloaders_from_files(
     augment_p: dict[str, float] | None = None,
     class_weights: Sequence[float] | None = None,
     sampler_cache: str | os.PathLike[str] | None = None,
+    sampler_keys: Sequence[str] | None = None,
     persistent_workers: bool = False,
 ) -> tuple["DataLoader", "DataLoader", "DataLoader"]:
     """Bangun ``train_loader, val_loader, test_loader`` dari daftar file eksplisit.
@@ -629,5 +631,5 @@ def build_dataloaders_from_files(
         train_files, val_files, test_files,
         batch_size=batch_size, num_workers=num_workers, augment_p=augment_p,
         class_weights=class_weights, sampler_cache=sampler_cache,
-        persistent_workers=persistent_workers,
+        sampler_keys=sampler_keys, persistent_workers=persistent_workers,
     )
