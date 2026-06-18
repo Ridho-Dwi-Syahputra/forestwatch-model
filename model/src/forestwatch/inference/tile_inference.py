@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from forestwatch.constants import N_CLASSES
 from forestwatch.utils.logging import get_logger

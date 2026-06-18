@@ -92,7 +92,7 @@ def train(
         import torch  # noqa: PLC0415
         from torch.amp import autocast  # noqa: PLC0415  (autocast ada sejak torch 1.10)
         from torchmetrics.classification import MulticlassJaccardIndex  # noqa: PLC0415
-        from tqdm import tqdm  # noqa: PLC0415
+        from tqdm.auto import tqdm  # noqa: PLC0415
     except ImportError as e:
         raise ImportError("Butuh torch + torchmetrics + tqdm. Install: pip install -e \".[ml]\"") from e
 

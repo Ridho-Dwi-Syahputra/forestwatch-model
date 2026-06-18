@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from forestwatch.constants import N_CLASSES
 from forestwatch.utils.io import save_npz

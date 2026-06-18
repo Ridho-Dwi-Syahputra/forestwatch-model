@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from forestwatch.constants import (
     CRS_DEFAULT,
