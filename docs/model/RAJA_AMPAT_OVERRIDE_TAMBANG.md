@@ -76,3 +76,14 @@ dari kasus Gag/Kawe/Manuran di atas.
 3. Jangan lupa: ambang `NDVI_BARE_THRESHOLD=0.25` dan `GAG_MINING_SUBBBOX` adalah **estimasi**,
    bukan survei presisi — kalau nanti ada akses ke data konsesi resmi (shapefile KLHK/ESDM),
    override ini sebaiknya diganti dengan poligon asli.
+4. **Cek ulang estimasi ukuran dataset di cell 5 `train_model_1/2/3_*.ipynb`.** Komentar lama
+   di situ: `"[Colab] Lewati ekstraksi lokal (disk ~73GB < dataset terekstrak ~97GB)"` —
+   **angka 97GB ini salah hitung** (dihitung dari ukuran array mentah, bukan dari file `.npz`
+   yang sebenarnya tersimpan **terkompresi**, `save_npz(..., compressed=True)` →
+   [io.py](../../model/src/forestwatch/utils/io.py)). Ukuran aktual `Bahan_Training_Fix`
+   (train+val+test, ~77k patch) ternyata **~40GB**, muat di disk Colab ~73GB. Artinya skip
+   ekstraksi khusus Colab di cell itu **kemungkinan tidak perlu lagi** — kalau diperbaiki
+   (selalu `extract_dataset_archives()` spt cabang `else`/`lab`), berpotensi langsung
+   menghilangkan bottleneck I/O Drive FUSE yang sebelumnya bikin "2-3 jam/epoch tidak selesai".
+   **Belum diubah** (keputusan: fokus Tahap 1 dulu) — cek & perbaiki ini di awal Tahap 2,
+   sebelum mulai training se-Papua penuh.
