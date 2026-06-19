@@ -87,3 +87,29 @@ dari kasus Gag/Kawe/Manuran di atas.
    menghilangkan bottleneck I/O Drive FUSE yang sebelumnya bikin "2-3 jam/epoch tidak selesai".
    **Belum diubah** (keputusan: fokus Tahap 1 dulu) — cek & perbaiki ini di awal Tahap 2,
    sebelum mulai training se-Papua penuh.
+5. **Alternatif arsitektur Tahap 2 (kalau GPU Colab limit/habis kuota)**: training `Bahan_Training_Fix`
+   (40GB) bisa dipindah ke **Jetson sebagai GPU server**, dieksekusi dari VS Code di PC Lab via
+   *remote Jupyter kernel* — bukan via Drive, lewat **SMB/CIFS share** dari HDD PC (data sudah
+   diekstrak ke `train/val/test` + `class_weights.json` + `patch_sampler_weights_shared.json`).
+   Catatan penting: kernel + GPU itu satu paket (sama seperti Colab — kernel jalan di VM Google,
+   bukan di laptop kamu), jadi Jetson **wajib** punya cara baca data PC (mount SMB), tidak bisa
+   "pinjam GPU doang" tanpa itu.
+
+   Langkah:
+   1. **PC**: pastikan folder data sudah terekstrak (bukan `.tar`), lalu *share* folder itu
+      (klik kanan → Properties → Sharing), catat IP PC (`ipconfig`).
+   2. **Jetson**: `sudo apt install -y cifs-utils` → `sudo mkdir -p /mnt/forestwatch_dataset` →
+      `sudo mount -t cifs //<IP_PC>/<share> /mnt/forestwatch_dataset -o username=...,password=...,vers=3.0`
+      → verifikasi `ls /mnt/forestwatch_dataset` muncul `train/ val/ test/ class_weights.json`.
+   3. **Jetson**: `jupyter notebook --no-browser --ip=0.0.0.0 --port=8888` → catat URL+token,
+      ganti host jadi IP Jetson (`hostname -I`).
+   4. **VS Code (PC)**: kernel picker → "Select Another Kernel" → "Existing Jupyter Server" →
+      masukkan URL Jetson.
+   5. Notebook cell 2: `ENV = "jetson"`, `DATA_ROOT = Path("/mnt/forestwatch_dataset")` (cocokkan
+      mount point). Jalankan, harus print `CUDA=True` dengan nama GPU Orin (bukan GPU PC yang lemah).
+
+   Alternatif lain tanpa setup jaringan sama sekali: **Kaggle Notebook** (GPU P100 16GB atau
+   2×T4, kuota ~30 jam/minggu, sesi ~9-12 jam) — upload `Bahan_Training_Fix` via Kaggle API
+   (bukan drag-drop browser, untuk ukuran 40GB), lalu ganti `DRIVE_ROOT`/`DATA_ROOT` ke
+   `/kaggle/input/...`. Cek ulang kuota/limit Kaggle terbaru di kaggle.com sebelum bergantung
+   penuh padanya untuk deadline ketat — kebijakan platform bisa berubah.
