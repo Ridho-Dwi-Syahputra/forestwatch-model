@@ -129,12 +129,37 @@ saat upload (lebih cepat untuk banyak file). **Catat slug** kedua dataset.
 
 ---
 
-## 7. Troubleshoot
+## 7. Resume multi-sesi di Kaggle (PENTING — 60 epoch ~16 jam > 1 sesi)
 
-- **Sesi mati di tengah training**: `/kaggle/temp` terhapus → mulai notebook lagi, cell 2 ekstrak
-  ulang, cell 11 **resume otomatis** dari `best_model_resume.pt` (kalau disimpan di
-  `/kaggle/working` & di-commit). Untuk aman lintas-sesi, pastikan checkpoint ada di
-  `/kaggle/working` (sudah default lewat `MODELS_ROOT`).
+60 epoch × ~16 mnt ≈ **16 jam**, sedangkan 1 sesi Kaggle maks ~12 jam → butuh **2 sesi**. Resume
+sudah didukung (`cfg.resume=True`, checkpoint `best_model_resume.pt`), DAN kode DRW menangani
+resume lintas-fase (kalau mati di fase 2, saat lanjut otomatis pakai loss class-balanced lagi).
+
+**TAPI gotcha Kaggle:** `/kaggle/working` pada sesi **interaktif** TIDAK otomatis persisten saat
+sesi berakhir — beda dari Drive. Supaya checkpoint selamat antar-sesi, pakai mode **batch**:
+
+1. **Sesi 1** — jangan run interaktif sampai mati. Pakai **"Save Version" → "Save & Run All
+   (Commit)"**: notebook jalan sebagai batch (sampai ~12 jam), dan **output `/kaggle/working`
+   otomatis tersimpan jadi versi** (termasuk bila kena limit waktu — partial output ikut tersimpan).
+   Saat commit selesai, `best_model_resume.pt` ada di output notebook versi itu.
+2. **Sesi 2** — di notebook yang sama: **Add Input → Notebook Output** (pilih output versi
+   sebelumnya), lalu di awal sebelum cell 11, salin checkpoint lama ke `/kaggle/working`:
+   ```python
+   import shutil, glob, os
+   for src in glob.glob('/kaggle/input/**/best_model*.pt', recursive=True):
+       dst = src.replace('/kaggle/input/' + src.split('/')[2], str(OUTPUTS_ROOT)).replace(
+           os.path.dirname(src), str(CKPT_PATH.parent))
+       os.makedirs(os.path.dirname(dst), exist_ok=True); shutil.copy(src, dst)
+   ```
+   (atau manual: copy `best_model.pt` + `best_model_resume.pt` ke
+   `OUTPUTS_ROOT/Model_Comparison/<MODEL_KEY>/`). Lalu **Save & Run All** lagi → cell 11 resume
+   dari epoch terakhir.
+3. Ulang sampai 60 epoch / early-stop fase 2 tercapai.
+
+> Re-ekstraksi tar (~5 mnt) terjadi tiap sesi (`/kaggle/temp` ephemeral) — itu wajar, training
+> progress tidak hilang selama checkpoint dibawa lewat output→input di atas.
+
+## 8. Troubleshoot
 - **`pip` mau reinstall torch**: Kaggle sudah punya torch CUDA; biasanya `pip install -e .[ml]`
   skip torch (versi sudah memenuhi). Kalau memaksa downgrade, hapus `torch`/`torchvision` dari
   pin atau install manual hanya `segmentation-models-pytorch torchmetrics albumentations`.
