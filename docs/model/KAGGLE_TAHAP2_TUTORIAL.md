@@ -102,21 +102,25 @@ saat upload (lebih cepat untuk banyak file). **Catat slug** kedua dataset.
    ENV = "kaggle"
    ```
 5. Jalankan cell sesuai urutan (sama seperti panduan Colab):
-   - **RUN**: `2 → 3 → 4 → 5 → 7 → 9 → 10 → 11 → 12 → 13 → 14 → 15`
+   - **RUN**: `2 → 3 → 4 → 5 → 7 → 9 → 10 → 11 → 12 → 13 → 14`
    - **boleh SKIP**: cell 6 (EDA distribusi, cuma info).
    - Cell 2 (kaggle) otomatis: clone repo, `pip install`, symlink mount, **ekstrak tar ke
      `/kaggle/temp/dataset_local`** (~5 mnt), salin json. Cell 4/5 lalu baca folder terekstrak itu
      (jalur "jetson", tanpa Drive/folder mentah).
 
+> Catatan: konfigurasi training saat ini = **80 epoch, sampler aktif, lr 1e-3, loss
+> `focal_tversky`** (regime yang sama dipakai di Colab — lihat Tahap 1/2 sebelumnya). Eksperimen
+> Deferred Re-Weighting (DRW) yang pernah ditambahkan sempat ditarik kembali supaya `git pull` di
+> sesi manapun (Colab/Kaggle) tidak diam-diam mengganti hyperparameter di tengah training yang
+> sedang berjalan. Kalau nanti mau dicoba lagi, perlu di-set ulang secara sengaja, bukan otomatis.
+
 ---
 
-## 5. Yang diamati (bukti perbaikan training jalan)
+## 5. Yang diamati
 
 - Cell 2: `extract_dataset_archives` selesai tanpa error; muncul `+ N patch Raja Ampat` di cell 4.
-- Cell 10: `DRW ON (...mulai epoch 41)`.
-- Cell 11: fase 1 (ep 1–40) Hutan **stabil**; ep 41 log `DRW aktif ... reset early-stop wait=0`;
-  IoU kelas langka mulai naik di fase 2.
-- Cell 14 (diagnostik): IoU kelas langka jauh di atas ~0.
+- Cell 11: log `Mulai training: ... epochs=80 (mulai ep 1)`, IoU per-kelas tercetak tiap epoch.
+- Bandingkan `best val mIoU` akhir vs hasil Tahap 1 (Merauke, 0,3146) dan run Tahap 2 sebelumnya.
 
 ---
 
@@ -129,11 +133,12 @@ saat upload (lebih cepat untuk banyak file). **Catat slug** kedua dataset.
 
 ---
 
-## 7. Resume multi-sesi di Kaggle (PENTING — 60 epoch ~16 jam > 1 sesi)
+## 7. Resume multi-sesi di Kaggle (PENTING bila training melebihi 1 sesi)
 
-60 epoch × ~16 mnt ≈ **16 jam**, sedangkan 1 sesi Kaggle maks ~12 jam → butuh **2 sesi**. Resume
-sudah didukung (`cfg.resume=True`, checkpoint `best_model_resume.pt`), DAN kode DRW menangani
-resume lintas-fase (kalau mati di fase 2, saat lanjut otomatis pakai loss class-balanced lagi).
+80 epoch × ~16 mnt/epoch ≈ **>12 jam**, sedangkan 1 sesi Kaggle maks ~9–12 jam → kemungkinan butuh
+**lebih dari 1 sesi** (early-stopping biasanya berhenti lebih awal dari plafon 80, tapi tetap
+siapkan rencana resume). Resume sudah didukung (`cfg.resume=True`, checkpoint
+`best_model_resume.pt`), persis sama dengan mekanisme yang dipakai saat ganti-akun di Colab.
 
 **TAPI gotcha Kaggle:** `/kaggle/working` pada sesi **interaktif** TIDAK otomatis persisten saat
 sesi berakhir — beda dari Drive. Supaya checkpoint selamat antar-sesi, pakai mode **batch**:

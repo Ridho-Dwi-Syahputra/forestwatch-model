@@ -64,9 +64,9 @@ model:
 training:
   batch_size: 8
   num_workers: 2
-  epochs: 60                 # plafon; fase 1 (1..drw_epoch) jalan penuh, fase 2 boleh early-stop
-  patience: 10               # early stopping — HANYA berlaku di fase 2 (epoch > drw_epoch)
-  learning_rate: 3.0e-4      # diturunkan dari 1e-3: fine-tune encoder ImageNet (peak ep-2 = LR ketinggian)
+  epochs: 80                 # plafon; early-stopping biasanya berhenti lebih awal
+  patience: 12               # early stopping
+  learning_rate: 1.0e-3
   weight_decay: 1.0e-4
   scheduler: "cosine"
   warmup_epochs: 3           # linear warmup sebelum cosine (0 = nonaktif)
@@ -74,21 +74,17 @@ training:
   freeze_encoder_epochs: 3   # transfer-learning 2-tahap: encoder ImageNet beku N epoch awal
   grad_clip: 1.0             # gradient clipping (norm); 0 = nonaktif
   resume: true               # lanjut dari checkpoint bila sesi Colab mati
-  # Deferred Re-Weighting (LDAM-DRW): rebalancing kelas langka HANYA via class-weight di loss,
-  # dan baru diaktifkan di fase 2 (epoch > drw_epoch). Sampler dimatikan supaya tidak ada
-  # stacking (penyebab Hutan jatuh 0,80->0,47 di Tahap 1).
-  use_weighted_sampler: false  # OFF — DRW murni (loss-reweighting only)
-  drw_epoch: 40                # fase 1 (representasi) 1..40 tanpa rebalancing; fase 2 41..60 class-balanced
+  use_weighted_sampler: true # oversample patch berisi kelas langka (Sawit/Tambang/Permukiman)
   loss:
-    # type: focal_tversky_ce | focal_tversky | ce_dice | ce_dice_lovasz | tversky | focal | lovasz
-    type: "focal_tversky_ce" # focal+tversky+CE; komponen CE = kendaraan class-weight DRW
+    # type: focal_tversky | ce_dice | ce_dice_lovasz | tversky | focal | lovasz
+    type: "focal_tversky"    # default berbasis literatur class-imbalance
     tversky_alpha: 0.3       # penalti false-positive
     tversky_beta: 0.7        # penalti false-negative (>alpha → recall kelas minoritas naik)
     focal_gamma: 2.0
     # Backward-compat (dipakai hanya jika type='ce_dice'):
     ce_weight: 0.6
     dice_weight: 0.4
-  use_class_weights: true    # median-frequency; kini BENAR dipakai (komponen CE di fase 2 DRW)
+  use_class_weights: true    # true = hitung median-frequency dari distribusi nyata
   augmentation:
     horizontal_flip_p: 0.5
     vertical_flip_p: 0.5

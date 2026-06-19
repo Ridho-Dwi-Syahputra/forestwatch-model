@@ -40,11 +40,6 @@ class TrainConfig:
     freeze_encoder_epochs: int = 3  # encoder ImageNet beku N epoch awal (0 = nonaktif)
     # --- Stabilitas ---
     grad_clip: float = 1.0  # gradient clipping (max-norm); 0 = nonaktif
-    # --- Deferred Re-Weighting (LDAM-DRW) ---
-    # Fase 1 (epoch 1..drw_epoch): representasi tanpa rebalancing (loss_fn).
-    # Fase 2 (epoch drw_epoch+1..): class-balanced loss (loss_fn_drw) + early-stop.
-    # 0 = nonaktif (perilaku lama: satu loss, early-stop dari awal).
-    drw_epoch: int = 0
     # --- Resume (anti sesi Colab mati) ---
     resume: bool = True
     resume_path: str = ""  # default: <ckpt_path>_resume.pt
@@ -74,22 +69,17 @@ def train(
     val_loader: "DataLoader",
     *,
     loss_fn,
-    loss_fn_drw=None,
     cfg: TrainConfig | None = None,
     optimizer: "torch.optim.Optimizer | None" = None,
     scheduler: "torch.optim.lr_scheduler._LRScheduler | None" = None,
     device: "str | torch.device | None" = None,
 ) -> dict[str, object]:
-    """Training loop dengan AMP + early stopping + Deferred Re-Weighting (DRW).
+    """Training loop dengan AMP + early stopping.
 
     Args:
         model: ``nn.Module``.
         train_loader, val_loader: PyTorch DataLoaders.
         loss_fn: Callable ``(pred, target) -> scalar`` (lihat ``model.losses``).
-            Dipakai di fase 1 (representasi, tanpa rebalancing).
-        loss_fn_drw: Loss fase 2 (class-balanced). Bila ``None`` atau
-            ``cfg.drw_epoch == 0``, DRW nonaktif & ``loss_fn`` dipakai sepanjang
-            training (perilaku lama). Lihat LDAM-DRW (Cao dkk. 2019).
         cfg: ``TrainConfig``. Default: parameter dari PRD.
         optimizer: Bila ``None``, AdamW(lr, weight_decay) dipakai.
         scheduler: Bila ``None``, CosineAnnealingLR(T_max=epochs) dipakai.
@@ -184,21 +174,6 @@ def train(
         except Exception as e:  # noqa: BLE001
             _logger.warning("Gagal resume (%s) - mulai dari awal.", e)
 
-    # ---------------- DRW: pilih loss aktif (penting saat resume di fase 2) ----------------
-    drw_on = bool(cfg.drw_epoch) and loss_fn_drw is not None
-    active_loss = loss_fn
-    if drw_on and start_epoch > cfg.drw_epoch:
-        active_loss = loss_fn_drw
-        _logger.info(
-            "Resume di fase DRW (start epoch %d > drw_epoch %d) -> pakai loss_fn_drw.",
-            start_epoch, cfg.drw_epoch,
-        )
-    elif drw_on:
-        _logger.info(
-            "DRW aktif: fase 1 (ep 1..%d) tanpa rebalancing, fase 2 (ep %d..) class-balanced.",
-            cfg.drw_epoch, cfg.drw_epoch + 1,
-        )
-
     # ---------------- FREEZE ENCODER (fase awal transfer-learning) ----------------
     freeze_n = int(getattr(cfg, "freeze_encoder_epochs", 0) or 0)
     encoder_frozen = False
@@ -213,21 +188,12 @@ def train(
     )
 
     for ep in range(start_epoch, cfg.epochs + 1):
-        # ---------------- DRW SWITCH (fase 1 -> fase 2) ----------------
-        if drw_on and ep == cfg.drw_epoch + 1:
-            active_loss = loss_fn_drw
-            wait = 0  # reset early-stop: fase 2 baru mulai, beri kesempatan penuh
-            _logger.info(
-                "DRW aktif mulai epoch %d: class-balanced loss + reset early-stop wait=0.", ep
-            )
-
         # ---------------- TRAIN ----------------
         model.train()
         # Unfreeze encoder tepat setelah fase frozen selesai.
         if encoder_frozen and ep > freeze_n:
             set_encoder_trainable(model, True)
             encoder_frozen = False
-            wait = 0  # reset early-stop: dinamika berubah pasca-unfreeze
             _logger.info("Encoder DIBUKA (unfreeze) mulai epoch %d - fine-tune penuh.", ep)
         # Selama fase frozen, model.train() tadi meng-aktifkan BN encoder → eval lagi.
         if encoder_frozen:
@@ -241,7 +207,7 @@ def train(
             optimizer.zero_grad(set_to_none=True)
             if use_amp:
                 with autocast(device_type=device_t.type):
-                    loss = active_loss(model(x), y)
+                    loss = loss_fn(model(x), y)
                 scaler.scale(loss).backward()
                 if cfg.grad_clip and cfg.grad_clip > 0:
                     scaler.unscale_(optimizer)
@@ -249,7 +215,7 @@ def train(
                 scaler.step(optimizer)
                 scaler.update()
             else:
-                loss = active_loss(model(x), y)
+                loss = loss_fn(model(x), y)
                 loss.backward()
                 if cfg.grad_clip and cfg.grad_clip > 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
@@ -268,7 +234,7 @@ def train(
             for x, y in tqdm(val_loader, desc=f"Epoch {ep:02d} [val  ]", leave=False):
                 x, y = x.to(device_t, non_blocking=True), y.to(device_t, non_blocking=True)
                 pred = model(x)
-                val_loss_sum += float(active_loss(pred, y).item())
+                val_loss_sum += float(loss_fn(pred, y).item())
                 pred_lbl = pred.argmax(1)
                 iou_macro.update(pred_lbl, y)
                 if iou_per_class is not None:
@@ -325,10 +291,7 @@ def train(
             resume_path,
         )
 
-        # Early stopping hanya di fase 2 (DRW). Fase 1 (representasi) jalan penuh
-        # sampai drw_epoch — re-balancing kontraproduktif utk representation learning,
-        # jadi jangan dipotong di sana (LDAM-DRW). DRW nonaktif -> berlaku dari awal.
-        if wait >= cfg.patience and (not drw_on or ep > cfg.drw_epoch):
+        if wait >= cfg.patience:
             _logger.info("Early stopping di epoch %d (patience=%d).", ep, cfg.patience)
             break
 
