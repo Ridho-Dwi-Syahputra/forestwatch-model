@@ -63,30 +63,25 @@ operasi yang ditarget paper footprint global) kemungkinan besar aman, tapi ini *
 diverifikasi dengan menjalankan cell-nya**, bukan dipercaya begitu saja — pelajaran langsung
 dari kasus Gag/Kawe/Manuran di atas.
 
-## 6. Yang WAJIB dilakukan setelah Tahap 1 berhasil, sebelum Tahap 2 (training se-Papua)
+## 6. Status checklist sebelum/di awal Tahap 2 (training se-Papua)
 
-1. **Jalankan cell verifikasi baru di `optimize_dataset.ipynb`** (cell 5) dan baca hasilnya.
+1. **Jalankan cell verifikasi baru di `optimize_dataset.ipynb`** (cell "Verifikasi: apakah
+   region transfer Tambang...") dan baca hasilnya. **BELUM DIJALANKAN** — ini satu-satunya item
+   yang masih perlu aksi MANUAL dari user (perlu Drive + GEE env, tidak bisa saya jalankan).
    - Kalau semua region > 0 piksel → `Bahan_Training_Fix` aman dipakai apa adanya.
    - Kalau ada region yang 0 piksel → perlu override manual serupa Gag untuk region itu
      (sub-bbox + threshold NDVI/bare-soil), sebelum data dipakai training skala penuh.
-2. **Pertimbangkan apakah patch Gag (Raja Ampat)** — saat ini hanya hidup di
-   `Training_Merauke_Boven_Digoel/` (folder khusus Tahap 1) — perlu digabung juga ke
-   `ForestWatch_Patches_Transfer` / `Bahan_Training_Fix` supaya sinyal Tambang lokal Papua ini
-   ikut terpakai di training se-Papua, bukan cuma di subset Merauke+BD.
+2. ✅ **SELESAI** — Patch Gag (Raja Ampat) sudah digabung ke pipeline 40GB. Lihat detail di
+   §7 di bawah.
 3. Jangan lupa: ambang `NDVI_BARE_THRESHOLD=0.25` dan `GAG_MINING_SUBBBOX` adalah **estimasi**,
    bukan survei presisi — kalau nanti ada akses ke data konsesi resmi (shapefile KLHK/ESDM),
    override ini sebaiknya diganti dengan poligon asli.
-4. **Cek ulang estimasi ukuran dataset di cell 5 `train_model_1/2/3_*.ipynb`.** Komentar lama
-   di situ: `"[Colab] Lewati ekstraksi lokal (disk ~73GB < dataset terekstrak ~97GB)"` —
-   **angka 97GB ini salah hitung** (dihitung dari ukuran array mentah, bukan dari file `.npz`
-   yang sebenarnya tersimpan **terkompresi**, `save_npz(..., compressed=True)` →
-   [io.py](../../model/src/forestwatch/utils/io.py)). Ukuran aktual `Bahan_Training_Fix`
-   (train+val+test, ~77k patch) ternyata **~40GB**, muat di disk Colab ~73GB. Artinya skip
-   ekstraksi khusus Colab di cell itu **kemungkinan tidak perlu lagi** — kalau diperbaiki
-   (selalu `extract_dataset_archives()` spt cabang `else`/`lab`), berpotensi langsung
-   menghilangkan bottleneck I/O Drive FUSE yang sebelumnya bikin "2-3 jam/epoch tidak selesai".
-   **Belum diubah** (keputusan: fokus Tahap 1 dulu) — cek & perbaiki ini di awal Tahap 2,
-   sebelum mulai training se-Papua penuh.
+4. ✅ **SELESAI** — Estimasi "97GB" di cell 5 `train_model_1/2/3_*.ipynb` sudah diperbaiki.
+   Ukuran aktual `Bahan_Training_Fix` ~40GB (muat di disk Colab ~73GB) karena `.npz` tersimpan
+   **terkompresi** (`save_npz(..., compressed=True)` → [io.py](../../model/src/forestwatch/utils/io.py)),
+   bukan ~97GB seperti dihitung dari array mentah. Cell 5 sekarang **selalu**
+   `extract_dataset_archives()` apa pun `ENV`-nya (termasuk Colab) — lepas dari bottleneck I/O
+   Drive FUSE yang sebelumnya bikin epoch 2-3 jam tak selesai.
 5. **Alternatif arsitektur Tahap 2 (kalau GPU Colab limit/habis kuota)**: training `Bahan_Training_Fix`
    (40GB) bisa dipindah ke **Jetson sebagai GPU server**, dieksekusi dari VS Code di PC Lab via
    *remote Jupyter kernel* — bukan via Drive, lewat **SMB/CIFS share** dari HDD PC (data sudah
@@ -113,3 +108,45 @@ dari kasus Gag/Kawe/Manuran di atas.
    (bukan drag-drop browser, untuk ukuran 40GB), lalu ganti `DRIVE_ROOT`/`DATA_ROOT` ke
    `/kaggle/input/...`. Cek ulang kuota/limit Kaggle terbaru di kaggle.com sebelum bergantung
    penuh padanya untuk deadline ketat — kebijakan platform bisa berubah.
+
+## 7. Raja Ampat (Gag) digabung ke pipeline 40GB se-Papua — detail implementasi
+
+**`optimize_dataset.ipynb`**:
+- Cell 3 (`else` branch, non-jetson): tambah `PATCHES_RAJA_AMPAT = DRIVE_ROOT /
+  'ForestWatch_Patches_RajaAmpat'`, `raja_ampat_files = list_patches(...)`, digabung ke
+  `train_files` (sejajar dengan `transfer_files`/`aug_files` — train-only, sama seperti
+  region transfer lain, val/test tetap holdout murni se-Papua tanpa Raja Ampat).
+- Cell "Subsampling": `subsample_to_targets()` dapat parameter baru `exempt` — patch Raja
+  Ampat **selalu dipertahankan penuh**, tidak ikut dikelompokkan ke cap Perairan/Hutan.
+  Alasan: island bbox Gag ~94% air, sebagian besar dari 144 patch-nya *dominant*-Perairan —
+  tanpa exempt ini, risiko nyata patch yang justru mengandung piksel Tambang (minoritas di
+  patch yang dominan Hutan/Perairan) ikut terbuang random saat subsampling kelas mayoritas.
+- `to_arcname()`: tambah prefix `(PATCHES_RAJA_AMPAT, "rajaampat")`.
+- Cell bundling: item Raja Ampat (arcname berprefiks `rajaampat/`) dipisah dari
+  `train_items_fix`, dibungkus sebagai **split tersendiri** `train_rajaampat` →
+  `Bahan_Training_Fix/train_rajaampat/train_rajaampat_part01.tar` — **BUKAN** dicampur ke
+  `train_part01-07.tar`. Tujuan: kalau Raja Ampat berubah (tambah pulau, ganti threshold
+  override), tidak perlu re-bundle 7 part train yang besar, cukup re-bundle 1 tar kecil ini.
+- Cell sampler weights: `sampler_keys_fix` digabung dari `train_items_fix` (prefix `"train"`)
+  + `ra_items_fix` (prefix `"train_rajaampat"`) — supaya key cocok dengan path lokal hasil
+  ekstraksi nanti (lihat poin berikut).
+
+**`train_model_1/2/3_*.ipynb`** (cell 5, "Siapkan artefak training"):
+- `extract_dataset_archives(BAHAN_DIR, LOCAL_DATA_DIR, splits=(...))` — `splits` sekarang
+  dinamis: otomatis tambah `'train_rajaampat'` kalau folder itu ada di `BAHAN_DIR` (deteksi
+  via `.exists()`, jadi tetap aman dijalankan terhadap `Bahan_Training_Fix` versi LAMA yang
+  belum punya Raja Ampat — tidak akan error).
+- `final_train_files` = patch dari `local_dirs['train']` **+** `local_dirs['train_rajaampat']`
+  (kalau ada) — digabung sebelum dipakai ke `build_dataloaders_from_files`.
+
+## 8. `OUTPUT_DIR` ditambahkan ke `train_model_1/2/3_*.ipynb`
+
+Menyamakan pola dengan notebook Merauke (`train_merauke_boven_digoel_attention_unet.ipynb`):
+- Cell 9 ("Identitas model"): tambah `OUTPUT_DIR = MODEL_DIR / 'output'` (khusus gambar),
+  dibuat via `mkdir`.
+- Cell plot history: `training_curve.png` sekarang disimpan ke `OUTPUT_DIR`, bukan `MODEL_DIR`
+  langsung (`training_history.json` tetap di `MODEL_DIR`, itu bukan gambar).
+- Cell evaluasi test: `confusion_matrix.png` sekarang ke `OUTPUT_DIR` (`metrics.json` tetap
+  di `MODEL_DIR`).
+- `compare_and_select_best_model.ipynb` (cell "Tetapkan pemenang"): disesuaikan, sekarang
+  copy `confusion_matrix.png` dari `WIN_DIR / 'output'`, bukan `WIN_DIR` langsung.
