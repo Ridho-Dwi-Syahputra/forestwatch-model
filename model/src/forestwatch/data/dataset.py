@@ -368,6 +368,7 @@ def extract_dataset_archives(
     overwrite: bool = False,
     min_free_ratio: float = 1.1,
     max_workers: int = 32,
+    max_tar_parallel: int = 4,
 ) -> dict[str, Path]:
     """Ekstrak arsip ``.tar`` (lihat :func:`create_dataset_archives`) ke disk lokal.
 
@@ -379,10 +380,17 @@ def extract_dataset_archives(
         overwrite: Paksa ekstrak ulang meski marker ``.extracted_ok`` sudah ada.
         min_free_ratio: Margin aman dibanding ukuran data tak terkompresi sebelum
             mulai ekstrak (default 1.1x).
-        max_workers: Jumlah thread penulis file paralel ke disk lokal (member
-            dibaca sekuensial dari ``.tar`` -- satu file tar tak bisa dibaca
-            bersamaan -- tapi penulisan ratusan-ribu file kecil ke disk lokal
-            jadi paralel -> mempercepat proses ekstraksi).
+        max_workers: Total thread penulis file ke disk lokal, dibagi rata antar tar
+            yang sedang diproses paralel (lihat ``max_tar_parallel``). Member DALAM
+            satu tar dibaca sekuensial (satu file handle tak bisa dibaca bersamaan
+            dari banyak thread) -- tapi penulisan ke disk lokal tetap paralel.
+        max_tar_parallel: Jumlah file ``.tar`` yang dibuka & dibaca BERSAMAAN (tiap
+            tar = file handle sendiri -> aman, beda dgn member dalam satu tar).
+            Bahan_Training_Fix biasanya 7-10 file tar (`train_part01-07` + val/test/
+            train_rajaampat); sebelum ini diproses SATU PER SATU (baca-dari-Drive
+            jadi bottleneck nyata, bukan max_workers yg cuma percepat tulis-lokal).
+            Default 4 -- cukup tinggi utk speedup nyata, tak terlalu agresif ke
+            rate-limit Drive FUSE (~10-15 req/s).
 
     Returns:
         Mapping nama split -> folder lokal hasil ekstraksi (``local_dir/<split>``).
@@ -438,6 +446,19 @@ def extract_dataset_archives(
                 f"{free / 1e9:.2f} GB di {local_dir}."
             )
 
+    def _extract_one_tar(tar_path: Path, split_dst: Path, write_workers: int) -> None:
+        with tarfile.open(tar_path, "r") as tf, ThreadPoolExecutor(max_workers=write_workers) as exe:
+            members = _safe_tar_members(tf)
+            bar = tqdm(total=len(members), desc=f"Extract {tar_path.name}", unit="file")
+            futures = []
+            for member in members:
+                extracted = tf.extractfile(member)
+                data = extracted.read() if extracted is not None else None
+                futures.append(exe.submit(_extract_member, split_dst, member, data, bar))
+            for fut in futures:
+                fut.result()
+            bar.close()
+
     result: dict[str, Path] = {}
     for split_name, tar_paths in tar_paths_by_split.items():
         split_dst = local_dir / split_name
@@ -446,18 +467,18 @@ def extract_dataset_archives(
             result[split_name] = split_dst
             continue
         split_dst.mkdir(parents=True, exist_ok=True)
-        for tar_path in tar_paths:
-            with tarfile.open(tar_path, "r") as tf, ThreadPoolExecutor(max_workers=max_workers) as exe:
-                members = _safe_tar_members(tf)
-                bar = tqdm(total=len(members), desc=f"Extract {tar_path.name}", unit="file")
-                futures = []
-                for member in members:
-                    extracted = tf.extractfile(member)
-                    data = extracted.read() if extracted is not None else None
-                    futures.append(exe.submit(_extract_member, split_dst, member, data, bar))
-                for fut in futures:
-                    fut.result()
-                bar.close()
+        # Paralelkan ANTAR file tar (tiap tar file handle sendiri -> aman dibaca
+        # bersamaan dari Drive). Bottleneck nyata ada di baca-dari-Drive per-tar,
+        # bukan tulis-ke-disk-lokal (yang sudah lama paralel via max_workers).
+        n_parallel = max(1, min(max_tar_parallel, len(tar_paths)))
+        write_workers = max(1, max_workers // n_parallel)
+        with ThreadPoolExecutor(max_workers=n_parallel) as outer_exe:
+            outer_futures = [
+                outer_exe.submit(_extract_one_tar, tp, split_dst, write_workers)
+                for tp in tar_paths
+            ]
+            for fut in outer_futures:
+                fut.result()
         marker.write_text("ok", encoding="utf-8")
         result[split_name] = split_dst
     return result
