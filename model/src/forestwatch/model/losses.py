@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 _PRESETS: dict[str, list[tuple[str, float]]] = {
     "ce_dice": [("ce", 0.6), ("dice", 0.4)],
     "focal_tversky": [("focal", 0.5), ("tversky", 0.5)],
+    # focal_tversky + komponen CE kecil sbg "kendaraan" class-weight (komponen
+    # focal & tversky smp TIDAK menerima class_weights — lihat _build_component).
+    # Dipakai untuk Deferred Re-Weighting (DRW): form loss konstan antar-fase,
+    # hanya vektor bobot CE yang ditunda (None di fase 1 -> median-freq di fase 2).
+    "focal_tversky_ce": [("focal", 0.4), ("tversky", 0.4), ("ce", 0.2)],
     "ce_dice_lovasz": [("ce", 0.4), ("dice", 0.3), ("lovasz", 0.3)],
     "tversky": [("tversky", 1.0)],
     "focal": [("focal", 1.0)],
