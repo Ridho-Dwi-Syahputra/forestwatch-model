@@ -159,7 +159,7 @@ sesi berakhir — beda dari Drive. Supaya checkpoint selamat antar-sesi, pakai m
    (atau manual: copy `best_model.pt` + `best_model_resume.pt` ke
    `OUTPUTS_ROOT/Model_Comparison/<MODEL_KEY>/`). Lalu **Save & Run All** lagi → cell 11 resume
    dari epoch terakhir.
-3. Ulang sampai 60 epoch / early-stop fase 2 tercapai.
+3. Ulang sampai 80 epoch (plafon) / early-stop tercapai.
 
 > Re-ekstraksi tar (~5 mnt) terjadi tiap sesi (`/kaggle/temp` ephemeral) — itu wajar, training
 > progress tidak hilang selama checkpoint dibawa lewat output→input di atas.
@@ -175,6 +175,6 @@ sesi berakhir — beda dari Drive. Supaya checkpoint selamat antar-sesi, pakai m
 
 ---
 
-> Catatan kejujuran: metrik utama tetap `metrics.json` (Papua-holdout). Cell 14 (diagnostik
-> train-genuine) bersifat **optimistik**, untuk melihat apakah model mengenali kelas langka —
-> bukan angka deployment. Jangan tukar keduanya saat lapor di esai.
+> Catatan kejujuran: metrik utama dan satu-satunya yang dilaporkan adalah `metrics.json`
+> (evaluasi di TEST set Papua-holdout, cell 13). Tidak ada cell diagnostik terpisah di
+> notebook ini — jangan dicampur dengan eksperimen lain yang mungkin punya metrik berbeda.
