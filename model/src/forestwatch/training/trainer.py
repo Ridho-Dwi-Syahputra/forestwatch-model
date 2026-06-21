@@ -310,23 +310,32 @@ def evaluate(
     *,
     n_classes: int = N_CLASSES,
     device: "str | torch.device | None" = None,
-) -> "tuple[object, object]":
-    """Kumpulkan prediksi & label dari ``loader`` (untuk confusion matrix).
+) -> "object":
+    """Evaluasi ``model`` di ``loader``, akumulasi confusion matrix per-batch.
+
+    Tidak menyimpan prediksi/label seluruh dataset di memori -- untuk test set besar
+    (ratusan ribu/jutaan piksel), mengumpulkan semuanya dulu baru menghitung confusion
+    matrix sekali di akhir bisa memakan banyak GB (konversi int64 di
+    ``compute_confusion_matrix``) dan memicu OOM. Di sini, confusion matrix dihitung
+    per-batch lalu dijumlahkan -- secara matematis identik, tapi memori puncak cuma
+    seukuran satu batch.
 
     Returns:
-        ``(pred_array, target_array)`` numpy flat 1D.
+        Confusion matrix ``(n_classes, n_classes)``, rows=true, cols=pred.
     """
     import numpy as np  # noqa: PLC0415
     import torch  # noqa: PLC0415
     from tqdm.auto import tqdm  # noqa: PLC0415
 
+    from forestwatch.training.metrics import compute_confusion_matrix  # noqa: PLC0415
+
     device_t = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     model = model.to(device_t).eval()
-    preds, targets = [], []
+    cm = np.zeros((n_classes, n_classes), dtype=np.int64)
     with torch.no_grad():
         for x, y in tqdm(loader, desc="Evaluasi", unit="batch"):
             x = x.to(device_t, non_blocking=True)
             p = model(x).argmax(1).cpu().numpy().astype(np.uint8)
-            preds.append(p.ravel())
-            targets.append(y.numpy().astype(np.uint8).ravel())
-    return np.concatenate(preds), np.concatenate(targets)
+            t = y.numpy().astype(np.uint8)
+            cm += compute_confusion_matrix(p, t, n_classes=n_classes)
+    return cm
