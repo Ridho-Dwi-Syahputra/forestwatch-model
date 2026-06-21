@@ -318,12 +318,13 @@ def evaluate(
     """
     import numpy as np  # noqa: PLC0415
     import torch  # noqa: PLC0415
+    from tqdm.auto import tqdm  # noqa: PLC0415
 
     device_t = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     model = model.to(device_t).eval()
     preds, targets = [], []
     with torch.no_grad():
-        for x, y in loader:
+        for x, y in tqdm(loader, desc="Evaluasi", unit="batch"):
             x = x.to(device_t, non_blocking=True)
             p = model(x).argmax(1).cpu().numpy().astype(np.uint8)
             preds.append(p.ravel())
