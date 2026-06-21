@@ -100,6 +100,8 @@ def export_to_onnx(
     Returns:
         Path absolut file ONNX.
     """
+    import inspect  # noqa: PLC0415
+
     import torch  # noqa: PLC0415
 
     out = Path(out_path)
@@ -113,13 +115,16 @@ def export_to_onnx(
     )
 
     model.eval()
-    torch.onnx.export(
-        model,
-        dummy,
-        out.as_posix(),
+    export_kwargs = dict(
         input_names=["image"],
         output_names=["mask"],
         opset_version=opset_version,
         dynamic_axes=dynamic_axes,
     )
+    # torch >=2.5-an default ke exporter dynamo (butuh paket "onnxscript" tambahan yg
+    # tak ter-install). Pasang dynamo=False HANYA kalau parameter itu ada (kompatibel
+    # torch 2.1 di Jetson yg tak punya parameter ini & tak boleh di-upgrade).
+    if "dynamo" in inspect.signature(torch.onnx.export).parameters:
+        export_kwargs["dynamo"] = False
+    torch.onnx.export(model, dummy, out.as_posix(), **export_kwargs)
     return out
