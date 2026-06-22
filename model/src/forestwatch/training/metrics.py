@@ -76,6 +76,48 @@ def compute_f1_per_class(cm: "np.ndarray", *, eps: float = 1e-9) -> "np.ndarray"
     return 2 * iou / (1 + iou + eps)
 
 
+def frequency_weighted_iou(cm: "np.ndarray", *, eps: float = 1e-9) -> float:
+    """FWIoU = Sum_c (freq_c * IoU_c), freq_c = row_sum_c / total.
+
+    Metrik pendamping standar di literatur segmentasi semantik (Long dkk. 2015
+    FCN; review RS arXiv 2302.06378). Berbeda dari mIoU (macro, tiap kelas
+    setara), FWIoU memberi bobot sesuai frekuensi piksel kelas di ground truth
+    -- bisa menutupi kelemahan kelas minoritas, jadi dilaporkan sbg pendamping
+    mIoU, bukan pengganti.
+    """
+    import numpy as np  # noqa: PLC0415
+
+    cm = np.asarray(cm, dtype=np.float64)
+    total = cm.sum()
+    if total < eps:
+        return 0.0
+    iou = compute_iou_per_class(cm, eps=eps)
+    freq = cm.sum(axis=1) / total
+    return float((freq * iou).sum())
+
+
+def recall_per_class(cm: "np.ndarray", *, eps: float = 1e-9) -> "np.ndarray":
+    """Recall per kelas = diag / row_sum. Dikenal sbg Producer's Accuracy
+    di accuracy assessment remote sensing (Olofsson dkk. 2014)."""
+    import numpy as np  # noqa: PLC0415
+
+    cm = np.asarray(cm, dtype=np.float64)
+    diag = np.diag(cm)
+    row_sum = cm.sum(axis=1)
+    return diag / (row_sum + eps)
+
+
+def precision_per_class(cm: "np.ndarray", *, eps: float = 1e-9) -> "np.ndarray":
+    """Precision per kelas = diag / col_sum. Dikenal sbg User's Accuracy
+    di accuracy assessment remote sensing (Olofsson dkk. 2014)."""
+    import numpy as np  # noqa: PLC0415
+
+    cm = np.asarray(cm, dtype=np.float64)
+    diag = np.diag(cm)
+    col_sum = cm.sum(axis=0)
+    return diag / (col_sum + eps)
+
+
 def overall_accuracy(cm: "np.ndarray", *, eps: float = 1e-9) -> float:
     """OA = diag.sum() / total.sum()."""
     import numpy as np  # noqa: PLC0415
@@ -152,20 +194,30 @@ def metric_summary(
     *,
     class_names: Sequence[str] | None = None,
 ) -> dict[str, object]:
-    """Bundle CM → dict {overall_accuracy, mean_iou, per_class: [...]}."""
+    """Bundle CM → dict {overall_accuracy, mean_iou, fwiou, kappa, per_class: [...]}."""
     iou = compute_iou_per_class(cm)
     f1 = compute_f1_per_class(cm)
+    recall = recall_per_class(cm)
+    precision = precision_per_class(cm)
     oa = overall_accuracy(cm)
     kappa = cohen_kappa(cm)
+    fwiou = frequency_weighted_iou(cm)
     if class_names is None:
         class_names = tuple(f"class_{i}" for i in range(len(iou)))
     per_class = [
-        {"class": class_names[i], "iou": float(iou[i]), "f1": float(f1[i])}
+        {
+            "class": class_names[i],
+            "iou": float(iou[i]),
+            "f1": float(f1[i]),
+            "precision": float(precision[i]),
+            "recall": float(recall[i]),
+        }
         for i in range(len(iou))
     ]
     return {
         "overall_accuracy": float(oa),
         "mean_iou": float(iou.mean()),
+        "fwiou": float(fwiou),
         "kappa": float(kappa),
         "per_class": per_class,
         "confusion_matrix": cm.tolist(),

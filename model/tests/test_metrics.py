@@ -10,9 +10,12 @@ from forestwatch.training.metrics import (
     compute_confusion_matrix,
     compute_f1_per_class,
     compute_iou_per_class,
+    frequency_weighted_iou,
     median_frequency_weights,
     metric_summary,
     overall_accuracy,
+    precision_per_class,
+    recall_per_class,
     set_seed,
 )
 
@@ -154,3 +157,69 @@ def test_median_freq_clipping():
 def test_median_freq_empty_distribution():
     w = median_frequency_weights({}, n_classes=6)
     assert w == [1.0] * 6
+
+
+# ============================================================================
+# FWIoU, precision/recall per kelas
+# ============================================================================
+
+
+def test_fwiou_perfect_prediction_is_one():
+    target = np.array([0, 0, 1, 1, 1, 2])
+    cm = compute_confusion_matrix(target, target, n_classes=3)
+    assert frequency_weighted_iou(cm) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_fwiou_balanced_classes_equals_miou():
+    # Frekuensi tiap kelas sama → FWIoU == mIoU
+    target = np.array([0, 1, 2, 0, 1, 2])
+    pred = np.array([1, 1, 1, 0, 1, 2])
+    cm = compute_confusion_matrix(pred, target, n_classes=3)
+    iou = compute_iou_per_class(cm)
+    assert frequency_weighted_iou(cm) == pytest.approx(iou.mean(), abs=1e-6)
+
+
+def test_fwiou_within_bounds():
+    rng = np.random.default_rng(1)
+    target = rng.integers(0, 4, size=500)
+    pred = rng.integers(0, 4, size=500)
+    cm = compute_confusion_matrix(pred, target, n_classes=4)
+    fwiou = frequency_weighted_iou(cm)
+    assert 0.0 <= fwiou <= 1.0
+
+
+def test_fwiou_empty_matrix():
+    cm = np.zeros((3, 3))
+    assert frequency_weighted_iou(cm) == 0.0
+
+
+def test_precision_recall_known_confusion():
+    # Kelas 0: 1 TP, 1 FN (diklasifikasi sbg 1); kelas 1: 1 TP, 1 FP (dari kelas 0)
+    target = np.array([0, 0, 1])
+    pred = np.array([0, 1, 1])
+    cm = compute_confusion_matrix(pred, target, n_classes=2)
+    recall = recall_per_class(cm)
+    precision = precision_per_class(cm)
+    # Recall kelas 0 = 1/2 (1 benar dari 2 piksel kelas 0)
+    np.testing.assert_allclose(recall, [0.5, 1.0], atol=1e-6)
+    # Precision kelas 0 = 1/1 (semua prediksi 0 benar), kelas 1 = 1/2
+    np.testing.assert_allclose(precision, [1.0, 0.5], atol=1e-6)
+
+
+def test_precision_recall_perfect_prediction():
+    target = np.array([0, 1, 2, 0, 1, 2])
+    cm = compute_confusion_matrix(target, target, n_classes=3)
+    np.testing.assert_allclose(recall_per_class(cm), [1.0, 1.0, 1.0], atol=1e-6)
+    np.testing.assert_allclose(precision_per_class(cm), [1.0, 1.0, 1.0], atol=1e-6)
+
+
+def test_metric_summary_includes_fwiou_and_precision_recall():
+    target = np.array([0, 0, 1, 1, 1, 2])
+    pred = np.array([0, 1, 1, 1, 1, 2])
+    cm = compute_confusion_matrix(pred, target, n_classes=3)
+    summary = metric_summary(cm, class_names=("A", "B", "C"))
+    assert "fwiou" in summary
+    assert 0.0 <= summary["fwiou"] <= 1.0
+    for entry in summary["per_class"]:
+        assert "precision" in entry
+        assert "recall" in entry
