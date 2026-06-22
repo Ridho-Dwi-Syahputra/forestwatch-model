@@ -82,16 +82,16 @@ Documentation = "https://github.com/USER/forestwatch-papua-model#readme"
 Repository = "https://github.com/USER/forestwatch-papua-model"
 
 [tool.setuptools]
-package-dir = { "" = "src" }
+package-dir = { "" = "model/src" }
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["model/src"]
 
 [tool.setuptools.package-data]
 "forestwatch" = ["py.typed"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["model/tests"]
 python_files = ["test_*.py"]
 addopts = "-ra -q --strict-markers"
 markers = [
