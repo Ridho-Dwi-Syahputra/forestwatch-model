@@ -223,6 +223,109 @@ def compute_patch_sampler_weights(
     return weights
 
 
+def compute_class_balanced_sampler_weights(
+    files: Sequence[str | os.PathLike[str]],
+    *,
+    n_classes: int | None = None,
+    cache_path: str | os.PathLike[str] | None = None,
+    max_workers: int = 64,
+    save_every: int = 5000,
+    keys: Sequence[str] | None = None,
+) -> list[float]:
+    """Bobot sampler untuk *class-balanced sampling* murni (Kang dkk., ICLR 2020,
+    *Decoupling Representation and Classifier for Long-Tailed Recognition* — resep
+    tahap classifier-retraining/cRT): tiap kelas mendapat probabilitas TERPILIH SAMA
+    (``1/n_classes``) per step training, lepas dari kelangkaan piksel aslinya.
+
+    Beda dari :func:`compute_patch_sampler_weights` (instance-balanced + reweighting
+    proporsional ke frekuensi piksel — kelas langka lebih sering, tapi tidak SAMA
+    rata): di sini Tambang dan Hutan, sesedikit/sebanyak apa pun piksel aslinya,
+    punya kesempatan terpilih yang identik.
+
+    Algoritma: anggap tiap kelas ``c`` punya "kelompok" patch yang mengandung
+    >=1 piksel kelas itu (``N_c`` = ukuran kelompok). Skema "pilih kelas seragam,
+    lalu pilih patch seragam dari kelompoknya" — kalau dikonversi jadi bobot
+    per-instance untuk ``WeightedRandomSampler`` (yang sampling rata) — ekuivalen
+    dengan::
+
+        weight(patch) = sum(1/n_classes / N_c for c hadir di patch)
+
+    Cache JSON menyimpan VEKTOR kehadiran kelas per-patch (bukan skalar bobot
+    langsung) — fakta struktural data yang tidak berubah, murah dipakai ulang
+    berapa pun ``n_classes`` di-tweak nantinya (beda dari cache
+    ``compute_patch_sampler_weights`` yang terikat ke satu ``class_weights``).
+
+    Args:
+        files: Daftar path ``p*.npz``.
+        n_classes: Jumlah kelas (default :data:`forestwatch.constants.N_CLASSES`).
+        cache_path: Path cache JSON (vektor kehadiran per-patch). Restart-safe.
+        max_workers: Worker paralel (I/O-bound -> default 64).
+        save_every: Simpan cache tiap N file selesai.
+        keys: Override key cache (lihat :func:`compute_patch_sampler_weights`).
+
+    Returns:
+        List bobot float sejajar urutan ``files``.
+    """
+    import json  # noqa: PLC0415
+    from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: PLC0415
+
+    import numpy as np  # noqa: PLC0415
+    from tqdm.auto import tqdm  # noqa: PLC0415
+
+    from forestwatch.constants import N_CLASSES  # noqa: PLC0415
+
+    n_classes = n_classes or N_CLASSES
+    files_p = [Path(f) for f in files]
+    if keys is not None:
+        if len(keys) != len(files_p):
+            raise ValueError("keys harus sejajar panjang dengan files")
+        keys = list(keys)
+    else:
+        keys = ["/".join(f.parts[-3:]) for f in files_p]
+    key_by_path = dict(zip(files_p, keys))
+
+    cache_path_p = Path(cache_path) if cache_path is not None else None
+    cache: dict[str, list[int]] = {}
+    if cache_path_p is not None and cache_path_p.exists():
+        try:
+            with open(cache_path_p) as fh:
+                cache = json.load(fh)
+        except (OSError, ValueError):
+            cache = {}
+
+    missing = [f for f, k in zip(files_p, keys) if k not in cache]
+    if missing:
+        def _presence(p: Path) -> list[int]:
+            lab = np.load(p)["lab"]
+            cnt = np.bincount(np.asarray(lab).ravel(), minlength=n_classes)[:n_classes]
+            return [int(c > 0) for c in cnt]
+
+        def _save_cache() -> None:
+            if cache_path_p is None:
+                return
+            cache_path_p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cache_path_p.with_name(cache_path_p.name + ".tmp")
+            with open(tmp, "w") as fh:
+                json.dump(cache, fh)
+            os.replace(tmp, cache_path_p)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as exe:
+            futures = {exe.submit(_presence, f): f for f in missing}
+            bar = tqdm(as_completed(futures), total=len(missing), desc="Class-balanced presence")
+            for i, fut in enumerate(bar, 1):
+                cache[key_by_path[futures[fut]]] = fut.result()
+                if cache_path_p is not None and (i % save_every == 0 or i == len(missing)):
+                    _save_cache()
+
+    presence = np.array([cache.get(k, [0] * n_classes) for k in keys], dtype=np.int64)
+    n_c = presence.sum(axis=0)  # jumlah patch yang mengandung kelas c, per kelas
+    inv = np.where(n_c > 0, 1.0 / (n_classes * np.maximum(n_c, 1)), 0.0)
+    weights = (presence * inv).sum(axis=1)
+    if not weights.any():
+        weights = np.ones(len(files_p))
+    return [float(w) for w in weights]
+
+
 def _chunk_items(
     items: list[tuple[str, Path]], n_parts: int
 ) -> list[list[tuple[str, Path]]]:

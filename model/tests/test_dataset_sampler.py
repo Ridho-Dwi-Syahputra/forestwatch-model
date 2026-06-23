@@ -8,7 +8,10 @@ from pathlib import Path
 
 import numpy as np
 
-from forestwatch.data.dataset import compute_patch_sampler_weights
+from forestwatch.data.dataset import (
+    compute_class_balanced_sampler_weights,
+    compute_patch_sampler_weights,
+)
 
 
 def _save_patch(path, lab):
@@ -165,6 +168,93 @@ def test_sampler_weight_keys_length_mismatch_raises(tmp_path):
 
     with pytest.raises(ValueError):
         compute_patch_sampler_weights([d / "p0.npz"], cw, keys=["a/b/c", "d/e/f"])
+
+
+# ============================================================================
+# Class-balanced sampling murni (Kang dkk. 2020, cRT) -- beda dari reweighting
+# proporsional di atas: tiap kelas dapat probabilitas SAMA (1/n_classes), bukan
+# cuma "lebih sering dari biasanya".
+# ============================================================================
+
+
+def test_class_balanced_equalizes_across_skewed_counts(tmp_path):
+    # 10 patch Hutan(1)-only vs 1 patch Tambang(5)-only -- skew ekstrem 10:1.
+    d = tmp_path / "t"
+    d.mkdir()
+    files = []
+    for i in range(10):
+        p = d / f"hutan_{i}.npz"
+        _save_patch(p, np.full((4, 4), 1))
+        files.append(p)
+    p_tambang = d / "tambang_0.npz"
+    _save_patch(p_tambang, np.full((4, 4), 5))
+    files.append(p_tambang)
+
+    w = compute_class_balanced_sampler_weights(files, n_classes=7)
+    w_hutan, w_tambang = w[:10], w[10]
+
+    # Tiap patch Hutan bobotnya SAMA satu sama lain (kelompok kelas sama).
+    assert all(abs(x - w_hutan[0]) < 1e-9 for x in w_hutan)
+    # Total massa probabilitas kelas Hutan == kelas Tambang (1/7 masing2 -- cuma 2
+    # dari 7 kelas hadir di toy-data ini).
+    assert abs(sum(w_hutan) - w_tambang) < 1e-9
+    # Per-patch: 1 patch Tambang 10x lebih "berharga" dari 1 patch Hutan -- sesuai
+    # rasio JUMLAH patch (bukti setara KELAS, bukan proporsional piksel/frekuensi).
+    assert abs(w_tambang / w_hutan[0] - 10.0) < 1e-6
+
+
+def test_class_balanced_mixed_patch_contributes_to_both_classes(tmp_path):
+    d = tmp_path / "t"
+    d.mkdir()
+    lab = np.full((4, 4), 1)
+    lab[:2, :] = 5  # separuh Hutan(1), separuh Tambang(5) -> hadir keduanya
+    _save_patch(d / "mixed.npz", lab)
+    _save_patch(d / "hutan_only.npz", np.full((4, 4), 1))
+
+    w = compute_class_balanced_sampler_weights(
+        [d / "mixed.npz", d / "hutan_only.npz"], n_classes=7
+    )
+    # N_hutan=2 (kedua patch), N_tambang=1 (cuma "mixed").
+    # weight(mixed) = (1/7)/2 [andil Hutan] + (1/7)/1 [andil Tambang] = 1/14 + 1/7
+    # weight(hutan_only) = (1/7)/2 = 1/14
+    assert abs(w[0] - (1 / 14 + 1 / 7)) < 1e-9
+    assert abs(w[1] - 1 / 14) < 1e-9
+
+
+def test_class_balanced_cache_roundtrip(tmp_path):
+    d = tmp_path / "t"
+    d.mkdir()
+    _save_patch(d / "p0.npz", np.full((4, 4), 1))
+    cache = tmp_path / "presence.json"
+
+    w1 = compute_class_balanced_sampler_weights([d / "p0.npz"], n_classes=7, cache_path=cache)
+    assert cache.exists()
+
+    # Hapus file patch -> call kedua HARUS pakai cache (tidak baca file lagi).
+    (d / "p0.npz").unlink()
+    w2 = compute_class_balanced_sampler_weights([d / "p0.npz"], n_classes=7, cache_path=cache)
+    assert w1 == w2
+
+
+def test_class_balanced_cache_stores_presence_vector(tmp_path):
+    # Cache simpan VEKTOR kehadiran (bukan skalar bobot) -- struktural, dapat dipakai
+    # ulang berapa pun n_classes/skema bobot final di-tweak nanti.
+    d = tmp_path / "t"
+    d.mkdir()
+    lab = np.full((4, 4), 1)
+    lab[:2, :] = 5
+    _save_patch(d / "p0.npz", lab)
+    cache = tmp_path / "presence.json"
+
+    compute_class_balanced_sampler_weights([d / "p0.npz"], n_classes=7, cache_path=cache)
+    stored = json.loads(cache.read_text())
+    (key,) = stored.keys()
+    assert stored[key] == [0, 1, 0, 0, 0, 1, 0]  # hadir kelas 1 & 5 saja
+
+
+def test_class_balanced_default_n_classes_is_none_fallback():
+    sig = inspect.signature(compute_class_balanced_sampler_weights)
+    assert sig.parameters["n_classes"].default is None  # fallback ke N_CLASSES internal
 
 
 def test_sampler_weight_no_collision_between_papua_and_transfer_tile(tmp_path):
