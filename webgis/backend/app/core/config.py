@@ -39,3 +39,24 @@ FILES = {
 
 VALID_YEARS = {2021, 2025}
 VALID_DOWNLOAD_FILES = {"geojson", "metrics", "legend"}
+
+# === Konfigurasi fitur "Analisis Wilayah Custom" (POST /api/analyze) ===
+# Auth GEE pakai Service Account (server, tanpa interaksi manusia) -- BUKAN ee.Authenticate().
+GEE_PROJECT = os.getenv("GEE_PROJECT", "forestwatch-papua-unand")
+GEE_SERVICE_ACCOUNT_EMAIL = os.getenv("GEE_SERVICE_ACCOUNT_EMAIL", "")
+GEE_SERVICE_ACCOUNT_KEY_PATH = os.getenv("GEE_SERVICE_ACCOUNT_KEY_PATH", "")
+
+# Checkpoint model (.pt) hasil training Orang 1 -- disalin/symlink ke backend/data/
+MODEL_CHECKPOINT_PATH: Path = Path(
+    os.getenv("MODEL_CHECKPOINT_PATH", str(DATA_DIR / "best_model.pt"))
+).resolve()
+MODEL_ARCHITECTURE = os.getenv("MODEL_ARCHITECTURE", "unet_scse")
+MODEL_ENCODER_NAME = os.getenv("MODEL_ENCODER_NAME", "resnet50")
+
+# Folder sementara untuk komposit GEE + mask hasil inferensi (dibersihkan tiap request)
+ANALYZE_TMP_DIR: Path = BACKEND_ROOT / ".analyze_tmp"
+ANALYZE_TMP_DIR.mkdir(exist_ok=True)
+
+# Batas ukuran AOI custom -- jaga waktu respons & ukuran download GEE tetap wajar saat demo.
+ANALYZE_MAX_SIDE_KM = float(os.getenv("ANALYZE_MAX_SIDE_KM", "20"))
+ANALYZE_SCALE_M = 10

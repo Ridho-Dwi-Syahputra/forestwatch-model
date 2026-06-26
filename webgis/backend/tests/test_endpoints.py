@@ -171,3 +171,22 @@ def test_root(client):
     r = client.get("/")
     assert r.status_code == 200
     assert "endpoints" in r.json()
+    assert "POST /api/analyze" in r.json()["endpoints"]
+
+
+def test_analyze_unconfigured_returns_503(client):
+    """Tanpa GEE_SERVICE_ACCOUNT_EMAIL & checkpoint model di env test, endpoint analyze harus
+    gagal jelas (503) -- bukan crash 500 -- supaya sisa API tetap bisa didemokan tanpa fitur ini."""
+    r = client.post(
+        "/api/analyze",
+        json={"aoi": [138.0, -5.0, 138.2, -4.8], "year_t1": 2021, "year_t2": 2025},
+    )
+    assert r.status_code == 503
+
+
+def test_analyze_invalid_aoi_returns_422(client):
+    r = client.post(
+        "/api/analyze",
+        json={"aoi": [138.2, -4.8, 138.0, -5.0], "year_t1": 2021, "year_t2": 2025},
+    )
+    assert r.status_code == 422

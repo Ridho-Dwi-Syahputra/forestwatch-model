@@ -14,8 +14,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.core import gee_client, model_singleton
 from app.core.config import CORS_ORIGINS, STATIC_DIR
-from app.routers import deforestation, download, health, landcover, legend, statistics
+from app.routers import analyze, deforestation, download, health, landcover, legend, statistics
 
 app = FastAPI(
     title="ForestWatch Papua API",
@@ -33,9 +34,17 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    # Non-fatal: kalau GEE/model belum dikonfigurasi, endpoint lain (pre-computed) tetap jalan
+    # normal -- cuma POST /api/analyze yang akan respond 503 sampai env var-nya diisi.
+    gee_client.init_ee_service_account()
+    model_singleton.load_model()
 
 # Serve PNG landcover via /static/
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -48,6 +57,7 @@ app.include_router(landcover.router,     prefix=PREFIX, tags=["Landcover"])
 app.include_router(deforestation.router, prefix=PREFIX, tags=["Deforestation"])
 app.include_router(statistics.router,    prefix=PREFIX, tags=["Statistics"])
 app.include_router(download.router,      prefix=PREFIX, tags=["Download"])
+app.include_router(analyze.router,       prefix=PREFIX, tags=["Analyze"])
 
 
 @app.get("/", tags=["Root"])
@@ -67,5 +77,6 @@ def root():
             "GET /api/statistics/summary",
             "GET /api/download/{file_type}",
             "GET /api/download/deforestation/csv",
+            "POST /api/analyze",
         ],
     }
