@@ -74,6 +74,41 @@ CLASS_COLORS: dict[int, str] = {
 CLASS_WEIGHTS_DEFAULT: tuple[float, ...] = (0.8, 0.4, 2.0, 2.0, 1.0, 2.5, 2.5)
 
 # ============================================================================
+# SKEMA ALTERNATIF 5 KELAS (eksperimen improve_model_5class.ipynb) — gabungkan
+# Tambang→Lahan Terbuka (kemiripan spektral tanah/batuan terbuka) dan
+# Sawit+Pertanian Lain→Pertanian (sama-sama kanopi pertanian). TIDAK mengubah
+# skema 7-kelas di atas (label_fusion/GEE export/WebGIS/change_detection tetap
+# 7-kelas) -- skema ini cuma dipakai saat training model alternatif, remap
+# dilakukan ON-THE-FLY dari label .npz 7-kelas yang sudah ada (tanpa re-export).
+N_CLASSES_5: int = 5
+
+CLASS_NAMES_5: tuple[str, ...] = (
+    "Perairan",
+    "Hutan",
+    "Lahan Terbuka",
+    "Pertanian",
+    "Permukiman",
+)
+
+CLASS_COLORS_5: dict[int, str] = {
+    0: "#2A6FDB",
+    1: "#0B3D0B",
+    2: "#E03B24",
+    3: "#F97316",
+    4: "#757575",
+}
+
+# old (7-kelas) -> new (5-kelas): 2=Lahan Terbuka & 5=Tambang -> 2; 3=Sawit &
+# 4=Pertanian Lain -> 3; 6=Permukiman -> 4. Perairan(0)/Hutan(1) tak berubah.
+REMAP_7_TO_5: dict[int, int] = {0: 0, 1: 1, 2: 2, 3: 3, 4: 3, 5: 2, 6: 4}
+
+TRANSITION_MAP_5: dict[int, str] = {
+    2: "hutan_ke_lahan_terbuka",
+    3: "hutan_ke_pertanian",
+    4: "hutan_ke_permukiman",
+}
+
+# ============================================================================
 # 4 JENIS TRANSISI DEFORESTASI (PRD §A.5 Cell 9, §B.1.3)
 # ============================================================================
 SOURCE_CLASS_FOREST: int = 1  # transisi dimulai dari "Hutan"
