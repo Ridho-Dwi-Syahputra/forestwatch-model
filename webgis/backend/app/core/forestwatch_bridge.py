@@ -1,11 +1,18 @@
-"""Jembatan import ke package ``forestwatch`` (di ``model/src/``).
+"""Jembatan import ke package ``forestwatch`` (source di ``model/src/``).
 
-Backend ini hidup di monorepo yang sama dengan paket model (``model/src/forestwatch``).
-Daripada duplikasi logika composite/inferensi/change-detection, kita tambahkan
-``model/src`` ke ``sys.path`` lalu re-export fungsi yang dipakai endpoint ``/api/analyze``.
+Backend memakai logika composite/inferensi/change-detection dari package ``forestwatch``
+(daripada duplikasi). Kita tambahkan ``model/src`` ke ``sys.path`` lalu re-export fungsi
+yang dipakai endpoint ``/api/analyze``.
 
-Asumsi deployment: image Docker menyalin seluruh monorepo (lihat ``Dockerfile``),
-bukan hanya folder ``webgis/backend``.
+Mendukung DUA layout supaya backend jalan baik di monorepo maupun di repo WebGIS standalone:
+
+1. **Monorepo** (``<root>/webgis/backend`` + ``<root>/model/src``) — pakai package asli
+   (selalu paling baru). Path: ``_BACKEND_ROOT.parent.parent / "model" / "src"``.
+2. **Repo WebGIS standalone** (``<repo>/backend`` + ``<repo>/model/src`` hasil vendoring)
+   — fallback ke salinan vendored. Path: ``_BACKEND_ROOT.parent / "model" / "src"``.
+
+Kandidat dicoba berurutan; yang pertama ADA dipakai. Urutan ini sengaja menaruh
+original (monorepo) lebih dulu supaya di monorepo tak memakai salinan yang bisa basi.
 """
 
 from __future__ import annotations
@@ -14,11 +21,17 @@ import sys
 from pathlib import Path
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
-_REPO_ROOT = _BACKEND_ROOT.parent.parent
-_MODEL_SRC = _REPO_ROOT / "model" / "src"
 
-if _MODEL_SRC.exists() and str(_MODEL_SRC) not in sys.path:
-    sys.path.insert(0, str(_MODEL_SRC))
+_MODEL_SRC_CANDIDATES = [
+    _BACKEND_ROOT.parent.parent / "model" / "src",  # monorepo: <root>/model/src (original)
+    _BACKEND_ROOT.parent / "model" / "src",         # standalone: <repo>/model/src (vendored)
+]
+
+for _candidate in _MODEL_SRC_CANDIDATES:
+    if _candidate.exists():
+        if str(_candidate) not in sys.path:
+            sys.path.insert(0, str(_candidate))
+        break
 
 try:
     from forestwatch.constants import CLASS_NAMES, TRANSITION_MAP  # noqa: E402

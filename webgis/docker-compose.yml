@@ -1,0 +1,36 @@
+# Jalankan backend + frontend sekaligus:
+#   docker compose up --build
+#
+# Backend  -> http://localhost:8000  (FastAPI, docs di /docs)
+# Frontend -> http://localhost:4173  (sudah diarahkan ke backend via VITE_API_URL)
+#
+# Catatan: build context backend = root repo ini (berisi backend/ + model/) supaya
+# forestwatch_bridge.py bisa akses model/src untuk /api/analyze.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      # Override default CORS supaya frontend (port 4173) diizinkan.
+      CORS_ORIGINS: "http://localhost:4173,http://localhost:5173,http://localhost:3000"
+    volumes:
+      # Mount data & secrets dari host (jangan di-bake ke image).
+      - ./backend/data:/app/backend/data
+      - ./backend/secrets:/app/backend/secrets
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:8000"
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend

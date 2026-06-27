@@ -1,0 +1,57 @@
+# === Python (backend + vendored model) ===
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# === Node (frontend) ===
+node_modules/
+frontend/dist/
+*.log
+*.err
+
+# === Environment & secrets ===
+.env
+.env.local
+backend/secrets/
+*.json.key
+
+# === Artefak besar / output runtime (JANGAN commit) ===
+# Checkpoint & model
+*.pt
+*.pth
+*.onnx
+*.h5
+# Data raster
+*.tif
+*.tiff
+*.npz
+# Folder kerja backend
+backend/.analyze_tmp/
+backend/static/*
+!backend/static/.gitkeep
+backend/data/*
+!backend/data/.gitkeep
+
+# === OS / IDE ===
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CATATAN: frontend/dummy-data/ (PNG + GeoJSON demo) SENGAJA di-commit -- itu data
+# contoh yang dipakai frontend saat berdiri sendiri tanpa backend. Jangan di-ignore.

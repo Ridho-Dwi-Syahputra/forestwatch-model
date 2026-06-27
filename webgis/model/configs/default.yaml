@@ -1,0 +1,129 @@
+# Default hyperparameters ForestWatch Papua
+# Override per-eksperimen dengan file YAML lain atau env vars.
+
+project:
+  name: "ForestWatch Papua"
+  gee_project_id: "forestwatch-papua-unand"
+  seed: 42
+
+# Geografis
+area:
+  # Bounding box seluruh Papua (6 provinsi). Sesuai PRD §A.5 Cell 3.
+  papua_bbox: [130.0, -9.5, 141.2, 0.5]  # [minLon, minLat, maxLon, maxLat]
+  crs: "EPSG:4326"
+
+# Periode pembanding (untuk deteksi perubahan)
+periods:
+  t1: 2021
+  t2: 2025
+
+# Sentinel-2 input
+sentinel2:
+  asset_id: "COPERNICUS/S2_SR_HARMONIZED"
+  bands: ["B2", "B3", "B4", "B8", "B11", "B12"]
+  scale: 10                  # meter per piksel
+  cloud_threshold: 40        # % cloudy pixel maksimum sebelum filter
+  scl_mask_classes: [3, 8, 9, 10, 11]  # bayangan, awan, salju → buang
+  reflectance_divisor: 10000
+
+# Label fusion (revisi besar: Dynamic World sebagai PETA DASAR + overlay tematik)
+label_fusion:
+  dw_base: true              # Dynamic World (remap 9->6) jadi peta dasar
+  esa_forest_union: false    # true = perkuat Hutan dgn ESA (UNION, hanya menambah)
+  hansen_loss_year_min: 19   # tahun 2019 ke atas (lossyear >= 19) -> Lahan Terbuka (kelas 2)
+  hansen_erosion_pixels: 1   # morphological erosion radius
+  palm_prob_threshold: 0.5   # FDP Palm Probability >= ambang -> Sawit (kelas 3)
+  # Kelas 5 Tambang dari poligon Global Mining Footprint (Tang & Werner 2023)
+  # Sawit dari FDP Palm Probability model 2025a (ganti BIOPAMA 2019)
+
+# Ekspor ubin GEE
+export:
+  tiles_nx: 6                # grid kolom
+  tiles_ny: 6                # grid baris (total 36 ubin)
+  max_pixels: 10000000000000
+  file_format: "GeoTIFF"
+
+# Patch extraction
+patches:
+  size: 256                  # patch size (pixel)
+  stride: 256                # stride (256 = non-overlapping)
+  max_nan_ratio: 0.3         # buang patch dengan > 30% NaN
+  n_channels_image: 6        # 6 band Sentinel-2
+  n_channels_label: 1
+
+# Model
+model:
+  architecture: "unet"       # "unet" | "unet_scse" (attention upgrade)
+  encoder_name: "resnet50"
+  encoder_weights: "imagenet"
+  in_channels: 6
+  classes: 7
+  activation: null           # null = logits (softmax di loss)
+
+# Training
+training:
+  batch_size: 8
+  num_workers: 2
+  epochs: 80                 # plafon; early-stopping biasanya berhenti lebih awal
+  patience: 12               # early stopping
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  scheduler: "cosine"
+  warmup_epochs: 3           # linear warmup sebelum cosine (0 = nonaktif)
+  amp: true                  # automatic mixed precision
+  freeze_encoder_epochs: 3   # transfer-learning 2-tahap: encoder ImageNet beku N epoch awal
+  grad_clip: 1.0             # gradient clipping (norm); 0 = nonaktif
+  resume: true               # lanjut dari checkpoint bila sesi Colab mati
+  use_weighted_sampler: true # oversample patch berisi kelas langka (Sawit/Tambang/Permukiman)
+  loss:
+    # type: focal_tversky | ce_dice | ce_dice_lovasz | tversky | focal | lovasz
+    type: "focal_tversky"    # default berbasis literatur class-imbalance
+    tversky_alpha: 0.3       # penalti false-positive
+    tversky_beta: 0.7        # penalti false-negative (>alpha → recall kelas minoritas naik)
+    focal_gamma: 2.0
+    # Backward-compat (dipakai hanya jika type='ce_dice'):
+    ce_weight: 0.6
+    dice_weight: 0.4
+  use_class_weights: true    # true = hitung median-frequency dari distribusi nyata
+  augmentation:
+    horizontal_flip_p: 0.5
+    vertical_flip_p: 0.5
+    rotate_90_p: 0.5
+    brightness_contrast_p: 0.3   # radiometrik ringan
+    brightness_limit: 0.1
+    contrast_limit: 0.1
+  split:
+    train_ratio: 0.8
+    val_ratio: 0.1
+    test_ratio: 0.1
+
+# Inference
+inference:
+  patch_size: 256
+  stride: 128                # < patch_size = overlap-blending (hilangkan seam)
+  tta: true                  # test-time augmentation (rata-rata 4 flip/rotasi)
+
+# Change detection
+change_detection:
+  source_class: 1            # Hutan
+  min_area_ha: 0.5           # buang polygon < 0.5 ha (noise)
+  target_classes:            # 5 jenis transisi (dari Hutan)
+    2: "hutan_ke_lahan_terbuka"
+    3: "hutan_ke_sawit"
+    4: "hutan_ke_pertanian_lain"
+    5: "hutan_ke_tambang"
+    6: "hutan_ke_permukiman"
+
+# Outputs (7 file kontrak — PRD §B.1)
+outputs:
+  filenames:
+    landcover_t1_png: "landcover_2021.png"
+    landcover_t1_bounds: "landcover_2021_bounds.json"
+    landcover_t2_png: "landcover_2025.png"
+    landcover_t2_bounds: "landcover_2025_bounds.json"
+    deforestation_geojson: "deforestation.geojson"
+    statistics_json: "statistics.json"
+    legend_json: "legend.json"
+    metrics_json: "metrics.json"
+    model_onnx: "model.onnx"
+    model_card: "model_card.md"

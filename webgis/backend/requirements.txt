@@ -16,3 +16,13 @@ rasterio>=1.3
 torch>=2.0
 segmentation-models-pytorch>=0.3
 requests>=2.31
+
+# --- Dependensi core package `forestwatch` (di-vendor ke ./model, dipakai bridge) ---
+# numpy: array citra/mask. tqdm: progress bar -- DIIMPOR di level atas oleh
+# forestwatch.inference.tile_inference & change_detection (tanpa ini, bridge gagal
+# import diam-diam -> /api/analyze balas 503). pillow & pyyaml: dipakai submodul
+# forestwatch lain (outputs.landcover_png / config.load_config) bila dipanggil.
+numpy>=1.24,<3
+tqdm>=4.65
+pillow>=10.0
+pyyaml>=6.0
