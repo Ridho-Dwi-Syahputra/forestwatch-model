@@ -74,12 +74,14 @@ CLASS_COLORS: dict[int, str] = {
 CLASS_WEIGHTS_DEFAULT: tuple[float, ...] = (0.8, 0.4, 2.0, 2.0, 1.0, 2.5, 2.5)
 
 # ============================================================================
-# SKEMA ALTERNATIF 5 KELAS (eksperimen improve_model_5class.ipynb) — gabungkan
-# Tambang→Lahan Terbuka (kemiripan spektral tanah/batuan terbuka) dan
-# Sawit+Pertanian Lain→Pertanian (sama-sama kanopi pertanian). TIDAK mengubah
-# skema 7-kelas di atas (label_fusion/GEE export/WebGIS/change_detection tetap
-# 7-kelas) -- skema ini cuma dipakai saat training model alternatif, remap
-# dilakukan ON-THE-FLY dari label .npz 7-kelas yang sudah ada (tanpa re-export).
+# SKEMA ALTERNATIF 5 KELAS — EKSPERIMEN ARSIP, TIDAK DIPAKAI.
+# Skema FINAL proyek = 7 kelas (di atas). Blok ini ditinggalkan: dulu mencoba
+# gabungkan Tambang→Lahan Terbuka & Sawit+Pertanian Lain→Pertanian, tapi tim
+# memutuskan PERTAHANKAN 7 kelas (presisi analisis driver deforestasi spesifik-
+# komoditas hilang kalau digabung). Dipertahankan di sini HANYA sebagai rekam
+# jejak untuk notebook arsip improve_model_5class.ipynb -- bersifat aditif,
+# TIDAK mengubah/menyentuh skema 7-kelas (label_fusion/GEE export/WebGIS/
+# change_detection semuanya tetap 7-kelas). Jangan dipakai untuk produksi.
 N_CLASSES_5: int = 5
 
 CLASS_NAMES_5: tuple[str, ...] = (

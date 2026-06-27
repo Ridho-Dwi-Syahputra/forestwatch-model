@@ -12,19 +12,28 @@ import {
 export const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 export const YEARS = [2021, 2025];
 
-// Skema 5 kelas (Perairan, Hutan, Lahan Terbuka, Pertanian, Permukiman) -- Lahan Terbuka
-// mencakup bekas tambang, Pertanian mencakup sawit & pertanian lain (lihat REMAP_7_TO_5 /
-// TRANSITION_MAP_5 di model/src/forestwatch/constants.py).
+// Skema 7 kelas final: 5 jenis transisi deforestasi dari Hutan (selaras TRANSITION_COLORS /
+// TRANSITION_LABELS di model/src/forestwatch/constants.py).
 export const TRANSITION_META = {
   hutan_ke_lahan_terbuka: {
     label: "Lahan Terbuka",
     longLabel: "Hutan ke Lahan Terbuka",
     color: "#7F1D1D",
   },
-  hutan_ke_pertanian: {
-    label: "Pertanian",
-    longLabel: "Hutan ke Pertanian",
+  hutan_ke_sawit: {
+    label: "Sawit",
+    longLabel: "Hutan ke Sawit",
     color: "#F97316",
+  },
+  hutan_ke_pertanian_lain: {
+    label: "Pertanian Lain",
+    longLabel: "Hutan ke Pertanian Lain",
+    color: "#EAB308",
+  },
+  hutan_ke_tambang: {
+    label: "Tambang",
+    longLabel: "Hutan ke Tambang",
+    color: "#8E24AA",
   },
   hutan_ke_permukiman: {
     label: "Permukiman",
