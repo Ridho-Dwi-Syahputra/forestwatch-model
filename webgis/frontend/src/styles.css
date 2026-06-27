@@ -254,7 +254,10 @@ p {
 
 .dashboard-page,
 .analysis-page,
-.methodology-page {
+.accuracy-page,
+.methodology-page,
+.downloads-page,
+.custom-page {
   display: grid;
   gap: 16px;
 }
@@ -334,6 +337,23 @@ p {
   margin-top: 10px;
 }
 
+.secondary-button:disabled {
+  cursor: not-allowed;
+  color: #7b8b83;
+  background: #eef5f0;
+  box-shadow: none;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  background: linear-gradient(135deg, #789386, #9fb7ad);
+  box-shadow: none;
+}
+
+.primary-button.wide {
+  width: 100%;
+}
+
 .primary-button:hover,
 .secondary-button:hover,
 .icon-button:hover,
@@ -379,6 +399,10 @@ p {
   gap: 14px;
 }
 
+.kpi-grid.compact .kpi-card {
+  min-height: 134px;
+}
+
 .kpi-card {
   position: relative;
   min-height: 152px;
@@ -388,8 +412,8 @@ p {
 .kpi-card::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
+  inset: 12px auto 12px 0;
+  width: 3px;
   border-radius: 8px 0 0 8px;
   background: var(--accent);
 }
@@ -401,7 +425,8 @@ p {
   height: 38px;
   border-radius: 8px;
   color: #ffffff;
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 88%, #ffffff);
+  box-shadow: 0 12px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .kpi-card p {
@@ -413,7 +438,7 @@ p {
 .kpi-card strong {
   display: block;
   margin-top: 5px;
-  color: #123d2f;
+  color: #20382f;
   font-size: 1.22rem;
   line-height: 1.15;
 }
@@ -490,7 +515,7 @@ p {
 
 .transition-list button:hover,
 .ranking-list button:hover {
-  background: #e8f5ef;
+  background: #eef7f2;
 }
 
 .transition-list span,
@@ -562,15 +587,16 @@ p {
 
 .insight-grid span {
   min-height: 88px;
+  border: 1px solid rgba(18, 61, 47, 0.08);
   border-radius: 8px;
   padding: 12px;
-  background: #f4faf6;
-  color: #53645b;
+  background: linear-gradient(180deg, #fbfdfb 0%, #f1f7f3 100%);
+  color: #607269;
   line-height: 1.45;
 }
 
 .insight-grid b {
-  color: #123d2f;
+  color: #244b3f;
 }
 
 .webgis-page {
@@ -632,7 +658,7 @@ p {
   min-height: 64px;
   border-radius: 8px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.78);
 }
 
@@ -690,6 +716,48 @@ p {
   box-shadow: 0 10px 20px rgba(18, 61, 47, 0.2);
 }
 
+.year-slider {
+  display: grid;
+  gap: 9px;
+  margin-top: 6px;
+}
+
+.year-slider span {
+  color: #123d2f;
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.year-ticks {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.year-ticks button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: #eef5f0;
+  color: #53645b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.year-ticks button.active {
+  background: #123d2f;
+  color: #ffffff;
+}
+
+.layer-note {
+  margin-top: 10px;
+  color: #607269;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .range-row,
 .select-row {
   display: grid;
@@ -715,7 +783,8 @@ input[type="range"] {
 }
 
 .select-row select,
-.tool-panel select {
+.tool-panel select,
+.custom-year-grid input {
   width: 100%;
   min-height: 36px;
   border: 1px solid rgba(18, 61, 47, 0.18);
@@ -723,6 +792,77 @@ input[type="range"] {
   background: #f8fbf8;
   color: #123d2f;
   padding: 0 10px;
+}
+
+.custom-analysis-form {
+  display: grid;
+  gap: 10px;
+}
+
+.custom-select-row {
+  margin-top: 0;
+}
+
+.custom-year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.custom-year-grid label {
+  display: grid;
+  gap: 6px;
+  color: #53645b;
+  font-size: 0.8rem;
+}
+
+.custom-year-grid span {
+  font-weight: 800;
+  color: #123d2f;
+}
+
+.custom-analysis-status {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  border-radius: 8px;
+  padding: 11px;
+  background: #f4faf6;
+  color: #53645b;
+  font-size: 0.84rem;
+}
+
+.custom-analysis-status.success {
+  border: 1px solid rgba(44, 166, 164, 0.24);
+  background: #edf9f5;
+  color: #123d2f;
+}
+
+.custom-analysis-status.error {
+  border: 1px solid rgba(224, 59, 36, 0.24);
+  background: #fff2ef;
+  color: #7f1d1d;
+}
+
+.custom-analysis-status dl {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 5px 10px;
+  margin: 0;
+}
+
+.custom-analysis-status dt {
+  color: #607269;
+}
+
+.custom-analysis-status dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 800;
+}
+
+.custom-analysis-form.large {
+  gap: 14px;
 }
 
 .filter-grid {
@@ -881,6 +1021,162 @@ input[type="range"] {
   text-align: right;
 }
 
+.trend-chart {
+  display: grid;
+  gap: 10px;
+}
+
+.trend-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 118px 92px;
+  gap: 10px;
+  align-items: center;
+  color: #53645b;
+  font-size: 0.84rem;
+}
+
+.trend-row > div {
+  overflow: hidden;
+  height: 12px;
+  border-radius: 999px;
+  background: #e5eee8;
+}
+
+.trend-row i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2f6b57, #d7bf63);
+}
+
+.trend-row strong {
+  color: #123d2f;
+  text-align: right;
+}
+
+.trend-row em {
+  color: #7b8b83;
+  font-style: normal;
+  text-align: right;
+}
+
+.accuracy-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+
+.matrix-wrap {
+  overflow: auto;
+}
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 112px repeat(7, minmax(68px, 1fr));
+  gap: 5px;
+  min-width: 720px;
+}
+
+.matrix-grid b,
+.matrix-row-label,
+.matrix-corner,
+.matrix-cell {
+  display: grid;
+  place-items: center;
+  min-height: 38px;
+  border-radius: 7px;
+  padding: 6px;
+  text-align: center;
+  font-size: 0.74rem;
+}
+
+.matrix-grid b,
+.matrix-corner,
+.matrix-row-label {
+  background: #eef5f0;
+  color: #123d2f;
+  font-weight: 850;
+}
+
+.matrix-cell {
+  color: #123d2f;
+  font-weight: 800;
+}
+
+.metric-table strong {
+  white-space: nowrap;
+}
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.download-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  gap: 12px;
+  align-items: center;
+  min-height: 110px;
+  border: 1px solid rgba(18, 61, 47, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 18px 38px rgba(18, 61, 47, 0.1);
+}
+
+.download-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(47, 107, 87, 0.28);
+}
+
+.download-card > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #2f6b57;
+}
+
+.download-card strong {
+  color: #123d2f;
+}
+
+.download-card p {
+  margin-top: 5px;
+  color: #607269;
+  line-height: 1.45;
+}
+
+.download-card > svg {
+  color: #4f8b75;
+}
+
+.custom-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1.1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.custom-result-panel {
+  padding: 18px;
+}
+
+.custom-result-panel small {
+  display: block;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.custom-result-panel .summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .method-hero {
   padding: 24px;
 }
@@ -1009,7 +1305,10 @@ input[type="range"] {
   .dashboard-grid,
   .analysis-grid,
   .analysis-grid.lower,
-  .method-grid-cards {
+  .method-grid-cards,
+  .accuracy-grid,
+  .download-grid,
+  .custom-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1035,7 +1334,9 @@ input[type="range"] {
 
   .kpi-grid,
   .insight-grid,
-  .webgis-tools {
+  .webgis-tools,
+  .download-grid,
+  .custom-result-panel .summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1056,6 +1357,23 @@ input[type="range"] {
     right: 12px;
     top: 108px;
     bottom: auto;
+  }
+
+  .trend-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .trend-row strong,
+  .trend-row em {
+    text-align: left;
+  }
+
+  .download-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .download-card > svg {
+    display: none;
   }
 
   .map-action-button {

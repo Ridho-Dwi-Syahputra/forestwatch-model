@@ -47,3 +47,6 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Clone repo teman (referensi/perbandingan manual, bukan bagian repo ini)
+webgis/webgis-Kasuari-AI/
