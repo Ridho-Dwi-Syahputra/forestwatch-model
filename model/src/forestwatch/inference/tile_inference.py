@@ -101,6 +101,7 @@ def infer_tile(
         import numpy as np  # noqa: PLC0415
         import rasterio  # noqa: PLC0415
         import torch  # noqa: PLC0415
+        from rasterio.windows import Window  # noqa: PLC0415
     except ImportError as e:
         raise ImportError(
             "Butuh numpy + rasterio + torch. Install: pip install -e \".[ml,gis]\""
@@ -114,18 +115,6 @@ def infer_tile(
     device_t = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     model = model.to(device_t).eval()
 
-    with rasterio.open(tif_path) as src:
-        W, H = src.width, src.height
-        meta = src.meta.copy()
-        meta.update(count=1, dtype="uint8", compress="lzw")
-        band_indices = list(range(1, n_channels_image + 1))  # rasterio 1-indexed
-        full = src.read(band_indices).astype("float32")  # (C, H, W)
-        full = np.nan_to_num(full)
-
-    # Akumulator probabilitas + count (untuk rata-rata di area overlap)
-    prob_acc = np.zeros((n_classes, H, W), dtype="float32")
-    count = np.zeros((H, W), dtype="float32")
-
     # Origin grid; pastikan tepi kanan/bawah selalu tercakup
     def _starts(extent: int) -> list[int]:
         if extent <= patch_size:
@@ -135,30 +124,46 @@ def infer_tile(
             xs.append(extent - patch_size)
         return xs
 
-    windows = [(r, c) for r in _starts(H) for c in _starts(W)]
+    band_indices = list(range(1, n_channels_image + 1))  # rasterio 1-indexed
 
-    with torch.no_grad():
-        for i in range(0, len(windows), batch_size):
-            chunk = windows[i : i + batch_size]
-            patches = []
-            shapes = []
-            for r, c in chunk:
-                patch = full[:, r : r + patch_size, c : c + patch_size]
-                # Patch bisa lebih kecil dari patch_size kalau tile < patch_size
-                ph, pw = patch.shape[1], patch.shape[2]
-                shapes.append((ph, pw))
-                if (ph, pw) != (patch_size, patch_size):
-                    padded = np.zeros((patch.shape[0], patch_size, patch_size), dtype="float32")
-                    padded[:, :ph, :pw] = patch
-                    patch = padded
-                patches.append(patch)
+    # Tile sumber bisa >GB-an (6 band float32) -- JANGAN load seluruh tile ke RAM sekaligus
+    # (risiko OOM di Colab free, ~12 GB RAM). Tiap window dibaca langsung dari file via
+    # rasterio Window saat dibutuhkan -- hasil pikselnya identik dgn slice array penuh,
+    # cuma jejak memori jauh lebih kecil (cuma 1 batch window di RAM, bukan 1 tile penuh).
+    with rasterio.open(tif_path) as src:
+        W, H = src.width, src.height
+        meta = src.meta.copy()
+        meta.update(count=1, dtype="uint8", compress="lzw")
 
-            x = torch.from_numpy(np.stack(patches, axis=0)).to(device_t)
-            probs_batch = _predict_proba_tta(model, x, tta=tta).cpu().numpy()  # (B, n_classes, ps, ps)
+        prob_acc = np.zeros((n_classes, H, W), dtype="float32")
+        count = np.zeros((H, W), dtype="float32")
 
-            for (r, c), (ph, pw), probs in zip(chunk, shapes, probs_batch):
-                prob_acc[:, r : r + ph, c : c + pw] += probs[:, :ph, :pw]
-                count[r : r + ph, c : c + pw] += 1.0
+        windows = [(r, c) for r in _starts(H) for c in _starts(W)]
+
+        with torch.no_grad():
+            for i in range(0, len(windows), batch_size):
+                chunk = windows[i : i + batch_size]
+                patches = []
+                shapes = []
+                for r, c in chunk:
+                    win = Window(c, r, min(patch_size, W - c), min(patch_size, H - r))
+                    patch = src.read(band_indices, window=win).astype("float32")
+                    patch = np.nan_to_num(patch)
+                    # Patch bisa lebih kecil dari patch_size kalau tile < patch_size
+                    ph, pw = patch.shape[1], patch.shape[2]
+                    shapes.append((ph, pw))
+                    if (ph, pw) != (patch_size, patch_size):
+                        padded = np.zeros((patch.shape[0], patch_size, patch_size), dtype="float32")
+                        padded[:, :ph, :pw] = patch
+                        patch = padded
+                    patches.append(patch)
+
+                x = torch.from_numpy(np.stack(patches, axis=0)).to(device_t)
+                probs_batch = _predict_proba_tta(model, x, tta=tta).cpu().numpy()  # (B, n_classes, ps, ps)
+
+                for (r, c), (ph, pw), probs in zip(chunk, shapes, probs_batch):
+                    prob_acc[:, r : r + ph, c : c + pw] += probs[:, :ph, :pw]
+                    count[r : r + ph, c : c + pw] += 1.0
 
     count = np.maximum(count, 1e-6)
     mask_full = (prob_acc / count).argmax(axis=0).astype("uint8")
