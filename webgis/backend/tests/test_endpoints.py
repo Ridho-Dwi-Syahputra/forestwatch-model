@@ -70,6 +70,12 @@ def client(tmp_path_factory):
     # Patch config
     os.environ["DATA_DIR"] = str(data_dir)
     os.environ["CORS_ORIGINS"] = "http://localhost:5173"
+    # Paksa fitur "Analisis Custom" tampak unconfigured di test ini, TERLEPAS dari isi .env
+    # nyata di mesin dev (load_dotenv() di config.py akan memuatnya kalau ada) -- supaya
+    # test_analyze_unconfigured_returns_503 deterministik, bukan kebetulan lolos krn .env kosong.
+    os.environ["GEE_SERVICE_ACCOUNT_EMAIL"] = ""
+    os.environ["GEE_SERVICE_ACCOUNT_KEY_PATH"] = ""
+    os.environ["MODEL_CHECKPOINT_PATH"] = str(data_dir / "nonexistent_model.pt")
 
     # Import setelah env di-set
     import importlib

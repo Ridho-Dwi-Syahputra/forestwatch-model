@@ -22,14 +22,24 @@ https://console.cloud.google.com/ → pojok kiri atas, pilih project **`forestwa
 - Menu ☰ → **APIs & Services** → **Enabled APIs & services** → **+ ENABLE APIS AND SERVICES**.
 - Cari **"Google Earth Engine API"** → klik → **Enable**.
 
-### 3. Buat Service Account
+### 3. Buat Service Account + 2 ROLE (penting, sering terlewat)
 - Menu ☰ → **IAM & Admin** → **Service Accounts** → **+ CREATE SERVICE ACCOUNT**.
 - *Service account name*: `forestwatch-backend` (bebas).
 - Klik **Create and Continue**.
-- *Grant this service account access*: pilih role **Earth Engine Resource Viewer**
-  (kalau tidak muncul, pakai **Editor**). Klik **Continue** → **Done**.
+- *Grant this service account access*: tambahkan **DUA** role (klik "ADD ANOTHER ROLE" utk yang
+  kedua) -- keduanya terverifikasi WAJIB lewat tes nyata (tanpa salah satu, gagal di titik
+  berbeda):
+  1. **Earth Engine Resource Writer** (BUKAN cuma "Viewer" -- `getDownloadURL()`/thumbnail
+     dianggap operasi "tulis" oleh GEE, "Viewer" akan gagal dgn
+     `Permission 'earthengine.thumbnails.create' denied`).
+  2. **Service Usage Consumer** (`roles/serviceusage.serviceUsageConsumer`) -- mengizinkan SA
+     "memakai" kuota API project; tanpa ini `ee.Initialize()` gagal dgn 403 `USER_PROJECT_DENIED`.
+- Klik **Continue** → **Done**.
 - Catat **email**-nya, formatnya:
   `forestwatch-backend@forestwatch-papua-3.iam.gserviceaccount.com`
+- Kalau service account sudah dibuat dgn role yang kurang/salah: buka **IAM & Admin → IAM** →
+  cari SA-nya → klik pensil (edit) → ganti/tambah role sesuai di atas → **Save**. Tunggu 1-2
+  menit (propagasi izin) sebelum coba lagi.
 
 ### 4. Buat & unduh kunci JSON
 - Di daftar Service Accounts, klik service account tadi → tab **KEYS**.
@@ -40,12 +50,18 @@ https://console.cloud.google.com/ → pojok kiri atas, pilih project **`forestwa
   ```
   (Folder `secrets/` sudah ada dan sudah di-`.gitignore` — file ini TIDAK akan ter-commit.)
 
-### 5. Daftarkan Service Account ke Earth Engine
-Service account perlu izin memakai Earth Engine:
-- Buka https://code.earthengine.google.com (login akun yang punya project), atau
-- Daftarkan di https://signup.earthengine.google.com/#!/service_accounts (tempel email SA dari
-  langkah 3).
-- Pastikan SA terdaftar di project `forestwatch-papua-3`.
+### 5. Verifikasi Service Account sudah punya akses Earth Engine
+Karena `forestwatch-papua-3` sudah Cloud Project yang terdaftar di Earth Engine (kamu bisa
+membuka `console.cloud.google.com/earth-engine/...?project=forestwatch-papua-3`), role IAM yang
+diberikan di **langkah 3** (`Earth Engine Resource Viewer`) SUDAH CUKUP — tidak perlu mendaftar
+lagi di tempat lain. Langkah `signup.earthengine.google.com/#!/service_accounts` ("tempel email
+SA") hanya untuk skema lama (akun individu, bukan Cloud Project) — **lewati**, tidak relevan di
+sini.
+
+Cukup verifikasi role-nya benar sudah tersimpan:
+- **IAM & Admin → IAM** (bukan halaman Earth Engine) → cari email service account-mu → pastikan
+  role **Earth Engine Resource Viewer** (atau Editor) muncul di baris itu.
+- Kalau sudah muncul, lanjut ke langkah 6.
 
 ### 6. Isi `.env`
 Buka `webgis/backend/.env`, isi baris email (key path sudah benar):
