@@ -11,10 +11,12 @@ export default function MethodologyPage() {
     <section className="page methodology-page">
       <section className="method-hero">
         <p className="eyebrow">Pipeline</p>
-        <h2>Data ditampilkan di Kasuari AI, inferensi berat tetap offline.</h2>
+        <h2>Hasil model disajikan di Kasuari AI, inferensi berat diproses terpisah.</h2>
         <p>
-          Aplikasi ini dibuat untuk presentasi dan eksplorasi hasil. Backend atau dummy-data
-          menyajikan produk pre-computed dari model, sehingga antarmuka tetap ringan dan stabil.
+          Sebagian besar halaman menampilkan produk hasil model yang sudah dihitung sebelumnya
+          (PNG tutupan lahan, GeoJSON perubahan, statistik), sehingga antarmuka tetap ringan dan
+          stabil. Hanya <b>Analisis Wilayah Custom</b> yang menjalankan inferensi langsung saat
+          diminta.
         </p>
       </section>
 
@@ -57,9 +59,9 @@ export default function MethodologyPage() {
           Catatan Interpretasi
         </div>
         <p>
-          Data saat ini bersumber dari <b>{data.source}</b>. Jika masih dummy, angka dan polygon
-          dipakai untuk pengembangan UI terlebih dahulu. Saat output model asli tersedia, file dapat
-          diganti tanpa mengubah struktur frontend.
+          Data saat ini bersumber dari <b>{data.source}</b>. Mode <b>Data Statis</b> membaca file
+          hasil model langsung dari frontend; mode <b>Backend API</b> mengambil produk yang sama
+          dari server. Struktur frontend tidak berubah saat sumber data diganti.
         </p>
       </section>
     </section>

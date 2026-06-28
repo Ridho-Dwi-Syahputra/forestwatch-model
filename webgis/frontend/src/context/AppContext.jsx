@@ -26,7 +26,7 @@ export function AppProvider({ children }) {
     () => new Set(Object.keys(TRANSITION_META))
   );
   const [customAnalysis, setCustomAnalysis] = useState({
-    aoi: "papua_selatan",
+    aoi: "merauke",
     yearT1: 2021,
     yearT2: 2025,
     minAreaHa: 1,
@@ -147,86 +147,81 @@ export function AppProvider({ children }) {
       return;
     }
 
+    // Fitur ini menjalankan inferensi NYATA di server -- tak ada hasil tiruan offline.
+    if (!API_URL) {
+      setCustomAnalysis((current) => ({
+        ...current,
+        yearT1,
+        yearT2,
+        minAreaHa,
+        status: "error",
+        message:
+          "Backend analisis belum aktif. Fitur ini butuh server + kredensial GEE " +
+          "(set VITE_API_URL & ikuti backend/SETUP_GEE.md).",
+        result: null,
+      }));
+      return;
+    }
+
     setCustomAnalysis((current) => ({
       ...current,
       yearT1,
       yearT2,
       minAreaHa,
       status: "loading",
-      message: API_URL ? "Mengirim request ke backend /api/analyze..." : "Menjalankan simulasi lokal...",
+      message: `Menarik citra & menganalisis ${preset.label} (bisa beberapa menit)...`,
       result: null,
     }));
 
-    if (API_URL) {
-      try {
-        const response = await fetch(`${API_URL}/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            aoi: preset.bbox,
-            year_t1: yearT1,
-            year_t2: yearT2,
-            min_area_ha: minAreaHa,
-          }),
-        });
-        if (!response.ok) throw new Error(`Backend mengembalikan status ${response.status}`);
-        const payload = await response.json();
-        const stats = payload.statistics || {};
-        const transitions = Object.entries(stats.per_transition_ha || {}).sort((a, b) => b[1] - a[1]);
-        setCustomAnalysis((current) => ({
-          ...current,
-          status: "success",
-          message: payload.message || `${preset.label}: hasil backend siap ditampilkan.`,
-          result: {
-            aoiLabel: preset.label,
-            featureCount: stats.n_hotspots || payload.deforestation?.features?.length || 0,
-            areaHa: Number(stats.total_deforestation_ha || 0),
-            period: `${yearT1} - ${yearT2}`,
-            topTransition: transitions[0]?.[0] || null,
-            source: "Backend API",
-          },
-        }));
-        return;
-      } catch (err) {
-        setCustomAnalysis((current) => ({
-          ...current,
-          status: "error",
-          message: `Gagal memanggil backend: ${err.message}`,
-          result: null,
-        }));
-        return;
+    try {
+      const response = await fetch(`${API_URL}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aoi: preset.bbox,
+          year_t1: yearT1,
+          year_t2: yearT2,
+          min_area_ha: minAreaHa,
+        }),
+      });
+      if (!response.ok) {
+        let detail = `status ${response.status}`;
+        try {
+          const errBody = await response.json();
+          if (errBody?.detail) detail = errBody.detail;
+        } catch {
+          /* abaikan: body bukan JSON */
+        }
+        throw new Error(detail);
       }
+      const payload = await response.json();
+      const stats = payload.statistics || {};
+      const transitions = Object.entries(stats.per_transition_ha || {}).sort((a, b) => b[1] - a[1]);
+      setCustomAnalysis((current) => ({
+        ...current,
+        status: "success",
+        message: `${preset.label}: analisis ${yearT1}-${yearT2} selesai.`,
+        result: {
+          aoiLabel: preset.label,
+          featureCount: stats.n_hotspots || payload.deforestation?.features?.length || 0,
+          areaHa: Number(stats.total_deforestation_ha || 0),
+          period: `${yearT1} - ${yearT2}`,
+          topTransition: transitions[0]?.[0] || null,
+          source: "Backend API",
+          deforestation: payload.deforestation || null,
+          bounds: payload.bounds || null,
+          landcoverT1Png: payload.landcover_t1_png || null,
+          landcoverT2Png: payload.landcover_t2_png || null,
+        },
+      }));
+    } catch (err) {
+      setCustomAnalysis((current) => ({
+        ...current,
+        status: "error",
+        message: `Gagal: ${err.message}`,
+        result: null,
+      }));
     }
-
-    const features = (data?.deforestation?.features || []).filter((feature) => {
-      const props = feature.properties || {};
-      const provinceOk = preset.province === "Semua Provinsi" || props.province === preset.province;
-      return provinceOk && Number(props.area_ha || 0) >= minAreaHa;
-    });
-    const areaHa = features.reduce((sum, feature) => sum + Number(feature.properties?.area_ha || 0), 0);
-    const transitionArea = features.reduce((acc, feature) => {
-      const type = feature.properties?.transition_type || "lainnya";
-      acc[type] = (acc[type] || 0) + Number(feature.properties?.area_ha || 0);
-      return acc;
-    }, {});
-    const topTransitionEntry = Object.entries(transitionArea).sort((a, b) => b[1] - a[1])[0];
-
-    setCustomAnalysis((current) => ({
-      ...current,
-      yearT1,
-      yearT2,
-      minAreaHa,
-      status: "success",
-      message: `${preset.label}: ${features.length} polygon simulasi siap.`,
-      result: {
-        aoiLabel: preset.label,
-        featureCount: features.length,
-        areaHa,
-        period: `${yearT1} - ${yearT2}`,
-        topTransition: topTransitionEntry?.[0] || null,
-        source: "Simulasi lokal",
-      },
-    }));
   }
 
   const value = {

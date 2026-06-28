@@ -29,7 +29,13 @@ def load_model() -> bool:
         return False
 
     try:
-        model = build_unet(architecture=MODEL_ARCHITECTURE, encoder_name=MODEL_ENCODER_NAME)
+        # encoder_weights=None: bobot asli datang dari load_state_dict di bawah, jadi tak perlu
+        # unduh ImageNet saat startup (butuh internet & sia-sia karena langsung ditimpa).
+        model = build_unet(
+            architecture=MODEL_ARCHITECTURE,
+            encoder_name=MODEL_ENCODER_NAME,
+            encoder_weights=None,
+        )
         state = torch.load(MODEL_CHECKPOINT_PATH, map_location="cpu")
         state_dict = state["model"] if isinstance(state, dict) and "model" in state else state
         model.load_state_dict(state_dict)

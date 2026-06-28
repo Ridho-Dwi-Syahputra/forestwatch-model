@@ -1159,12 +1159,81 @@ input[type="range"] {
 .custom-result-panel small {
   display: block;
   margin-top: 10px;
-  color: rgba(255, 255, 255, 0.78);
+  color: #53645b;
   line-height: 1.5;
+}
+
+.custom-result-panel.is-error {
+  border-color: rgba(176, 58, 46, 0.35);
+}
+
+.custom-result-panel.is-error small {
+  color: #b03a2e;
 }
 
 .custom-result-panel .summary-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Catatan cara kerja & batasan */
+.custom-note-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #53645b;
+  line-height: 1.7;
+}
+
+.custom-note-list code {
+  background: #eef3f0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
+
+/* Preview peta sebelum/sesudah */
+.custom-preview-section {
+  margin-top: 16px;
+}
+
+.aoi-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.aoi-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aoi-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aoi-preview-head strong {
+  color: #123d2f;
+}
+
+.aoi-preview-head small {
+  color: #6a7a72;
+}
+
+.aoi-preview-map {
+  height: 320px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(18, 61, 47, 0.12);
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .aoi-preview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .method-hero {

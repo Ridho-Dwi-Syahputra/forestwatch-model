@@ -41,6 +41,7 @@ try:
     )
     from forestwatch.inference.tile_inference import infer_tile  # noqa: E402
     from forestwatch.model.architecture import build_unet  # noqa: E402
+    from forestwatch.outputs.landcover_png import mask_to_rgb  # noqa: E402
     from forestwatch.outputs.statistics import summarize_geojson_transitions  # noqa: E402
 
     FORESTWATCH_AVAILABLE = True
@@ -62,6 +63,9 @@ except ImportError as exc:  # pragma: no cover - hanya saat env belum lengkap
         raise RuntimeError(f"Paket forestwatch tidak tersedia: {FORESTWATCH_IMPORT_ERROR}")
 
     def build_unet(*_args, **_kwargs):  # type: ignore[misc]
+        raise RuntimeError(f"Paket forestwatch tidak tersedia: {FORESTWATCH_IMPORT_ERROR}")
+
+    def mask_to_rgb(*_args, **_kwargs):  # type: ignore[misc]
         raise RuntimeError(f"Paket forestwatch tidak tersedia: {FORESTWATCH_IMPORT_ERROR}")
 
     def summarize_geojson_transitions(*_args, **_kwargs):  # type: ignore[misc]

@@ -57,6 +57,8 @@ MODEL_ENCODER_NAME = os.getenv("MODEL_ENCODER_NAME", "resnet50")
 ANALYZE_TMP_DIR: Path = BACKEND_ROOT / ".analyze_tmp"
 ANALYZE_TMP_DIR.mkdir(exist_ok=True)
 
-# Batas ukuran AOI custom -- jaga waktu respons & ukuran download GEE tetap wajar saat demo.
-ANALYZE_MAX_SIDE_KM = float(os.getenv("ANALYZE_MAX_SIDE_KM", "20"))
+# Batas ukuran AOI custom. 12 km dipilih karena batas byte getDownloadURL GEE (~48 MiB):
+# komposit 6 band float32 @ 10 m -> side_px^2 * 6 * 4 <= ~48 MiB -> sisi <= ~14 km. Ambil 12
+# km sebagai margin aman; AOI lebih besar akan ditolak (HTTP 400) dengan pesan jelas.
+ANALYZE_MAX_SIDE_KM = float(os.getenv("ANALYZE_MAX_SIDE_KM", "12"))
 ANALYZE_SCALE_M = 10

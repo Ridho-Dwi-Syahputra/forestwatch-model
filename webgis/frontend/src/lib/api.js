@@ -1,4 +1,4 @@
-// Pemuatan data: dari backend API (kalau VITE_API_URL diset) atau dummy-data lokal.
+// Pemuatan data: dari backend API (kalau VITE_API_URL diset) atau file statis hasil model lokal.
 export const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
 export function localPath(path) {
@@ -58,6 +58,6 @@ export async function loadData() {
     deforestation,
     statistics,
     metrics,
-    source: "Dummy Data",
+    source: "Data Statis",
   };
 }

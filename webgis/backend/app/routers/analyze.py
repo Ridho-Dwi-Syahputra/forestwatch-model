@@ -9,6 +9,8 @@ model segmentasi, lalu deteksi transisi Hutan->{5 kelas target}. Karena itu jauh
 
 from __future__ import annotations
 
+import base64
+import io
 import math
 import shutil
 import uuid
@@ -24,6 +26,7 @@ from app.core.forestwatch_bridge import (
     FORESTWATCH_IMPORT_ERROR,
     detect_transitions_from_arrays,
     infer_tile,
+    mask_to_rgb,
     s2_composite,
     summarize_geojson_transitions,
 )
@@ -32,6 +35,17 @@ from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 router = APIRouter()
 
 _DEG_TO_KM = 111.0
+
+
+def _mask_to_png_data_url(mask) -> str:
+    """Colorize mask kelas (H,W uint8) -> PNG RGBA -> data URL base64 utk preview di frontend."""
+    from PIL import Image  # noqa: PLC0415
+
+    rgba = mask_to_rgb(mask)  # (H, W, 4) uint8, pakai PALETTE_RGB resmi
+    buf = io.BytesIO()
+    Image.fromarray(rgba, mode="RGBA").save(buf, format="PNG", optimize=True)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{b64}"
 
 
 def _aoi_side_km(aoi: list[float]) -> tuple[float, float]:
@@ -119,12 +133,18 @@ def analyze(req: AnalyzeRequest):
         fc = {"type": "FeatureCollection", "features": features, "total": len(features)}
         stats = summarize_geojson_transitions(fc)
 
+        # Preview "sebelum vs sesudah": klasifikasi model di AOI (bukan foto satelit tahun tsb).
+        landcover_t1_png = _mask_to_png_data_url(mask_t1)
+        landcover_t2_png = _mask_to_png_data_url(mask_t2)
+
         return AnalyzeResponse(
             deforestation=fc,
             statistics=stats,
             bounds=[[bounds.bottom, bounds.left], [bounds.top, bounds.right]],
             year_t1=req.year_t1,
             year_t2=req.year_t2,
+            landcover_t1_png=landcover_t1_png,
+            landcover_t2_png=landcover_t2_png,
         )
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)

@@ -79,26 +79,28 @@ export const BASEMAPS = {
 };
 
 // Preset AOI utk halaman Analisis Wilayah Custom (POST /api/analyze).
+// Semua dibuat KECIL (~10 km/sisi) karena backend membatasi AOI <=12 km (batas unduh GEE).
+// bbox = [lon_min, lat_min, lon_max, lat_max]. Titik = hotspot deforestasi yang relevan.
 export const CUSTOM_AOI_PRESETS = {
-  papua: {
-    label: "Papua Overview",
-    province: "Semua Provinsi",
-    bbox: [130.0, -9.5, 141.2, 0.5],
-  },
-  papua_selatan: {
-    label: "Papua Selatan",
+  merauke: {
+    label: "Merauke (Food Estate)",
     province: "Papua Selatan",
-    bbox: [137.0, -9.5, 141.2, -5.0],
+    bbox: [140.36, -8.54, 140.45, -8.45],
   },
-  mimika: {
-    label: "Mimika",
+  boven_digoel: {
+    label: "Boven Digoel (Sawit)",
+    province: "Papua Selatan",
+    bbox: [140.22, -6.13, 140.32, -6.03],
+  },
+  timika: {
+    label: "Timika (Tambang)",
     province: "Papua Tengah",
-    bbox: [135.4, -5.8, 137.5, -3.6],
+    bbox: [136.83, -4.55, 136.93, -4.45],
   },
   jayapura: {
-    label: "Jayapura",
+    label: "Jayapura (Urban)",
     province: "Papua",
-    bbox: [139.0, -3.2, 140.4, -2.0],
+    bbox: [140.62, -2.63, 140.72, -2.53],
   },
 };
 
@@ -152,6 +154,6 @@ export const PAGE_SUBTITLES = {
   statistics: "Bandingkan provinsi, transisi, kelas, dan tren perubahan.",
   accuracy: "Bukti performa model segmentasi tujuh kelas tutupan lahan.",
   methodology: "Sumber data, pipeline model, dan batasan interpretasi.",
-  downloads: "Akses file dummy dan endpoint unduhan untuk transparansi data.",
-  custom: "Kirim AOI dan rentang tahun ke backend analisis.",
+  downloads: "Unduh artefak hasil model & endpoint API untuk transparansi data.",
+  custom: "Analisis deforestasi on-demand untuk wilayah kecil yang dipilih.",
 };

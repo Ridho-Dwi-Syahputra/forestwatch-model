@@ -31,3 +31,7 @@ class AnalyzeResponse(BaseModel):
     bounds: list[list[float]]
     year_t1: int
     year_t2: int
+    # Preview klasifikasi tutupan lahan model (data URL PNG RGBA) utk peta "sebelum vs sesudah".
+    # Bukan foto satelit tahun tsb -- ini hasil klasifikasi model di AOI yang diminta.
+    landcover_t1_png: str | None = None
+    landcover_t2_png: str | None = None

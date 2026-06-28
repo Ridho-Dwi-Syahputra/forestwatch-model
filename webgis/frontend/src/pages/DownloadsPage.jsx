@@ -44,10 +44,10 @@ export default function DownloadsPage() {
     <section className="page downloads-page">
       <section className="method-hero">
         <p className="eyebrow">Keterbukaan Data</p>
-        <h2>Unduh artefak data Kasuari AI untuk validasi dan demo.</h2>
+        <h2>Unduh artefak hasil model Kasuari AI untuk validasi.</h2>
         <p>
-          Link mengikuti mode data aktif: file dummy lokal saat frontend berdiri sendiri, atau
-          endpoint backend ketika <b>{data.source}</b> digunakan.
+          Link mengikuti mode data aktif: file hasil model lokal saat frontend berdiri sendiri,
+          atau endpoint backend ketika <b>{data.source}</b> digunakan.
         </p>
       </section>
 
