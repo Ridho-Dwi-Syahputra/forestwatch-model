@@ -68,12 +68,18 @@ def infer_tile(
     n_channels_image: int = 6,
     n_classes: int = N_CLASSES,
     tta: bool = False,
+    batch_size: int = 16,
 ) -> Path:
     """Inferensi 1 ubin GeoTIFF → simpan mask kelas uint8 sebagai GeoTIFF.
 
     Memakai akumulator probabilitas float (overlap-blending) sehingga aman
     untuk ``stride < patch_size``. Patch tepi yang tidak pas grid tetap
     tercakup (ditambahkan window terakhir yang menempel ke tepi).
+
+    Semua sliding-window di-batch (``batch_size`` window/forward-pass) --
+    jauh lebih cepat di GPU drpd 1 window/forward-pass (default sebelumnya).
+    Multiprocessing antar-tile TIDAK dipakai krn cuma ada 1 GPU; proses paralel
+    akan rebutan GPU yang sama (kontensi), bukan mempercepat.
 
     Args:
         tif_path: Path ubin input (berisi ``n_channels_image`` band citra).
@@ -86,6 +92,7 @@ def infer_tile(
         n_channels_image: Jumlah band citra.
         n_classes: Jumlah kelas (untuk buffer probabilitas).
         tta: Aktifkan Test-Time Augmentation.
+        batch_size: Jumlah window digabung per forward-pass GPU.
 
     Returns:
         Path output absolut.
@@ -128,17 +135,28 @@ def infer_tile(
             xs.append(extent - patch_size)
         return xs
 
-    rows = _starts(H)
-    cols = _starts(W)
+    windows = [(r, c) for r in _starts(H) for c in _starts(W)]
 
     with torch.no_grad():
-        for r in rows:
-            for c in cols:
+        for i in range(0, len(windows), batch_size):
+            chunk = windows[i : i + batch_size]
+            patches = []
+            shapes = []
+            for r, c in chunk:
                 patch = full[:, r : r + patch_size, c : c + patch_size]
                 # Patch bisa lebih kecil dari patch_size kalau tile < patch_size
                 ph, pw = patch.shape[1], patch.shape[2]
-                x = torch.from_numpy(patch).unsqueeze(0).to(device_t)
-                probs = _predict_proba_tta(model, x, tta=tta)[0].cpu().numpy()  # (n_classes, ph, pw)
+                shapes.append((ph, pw))
+                if (ph, pw) != (patch_size, patch_size):
+                    padded = np.zeros((patch.shape[0], patch_size, patch_size), dtype="float32")
+                    padded[:, :ph, :pw] = patch
+                    patch = padded
+                patches.append(patch)
+
+            x = torch.from_numpy(np.stack(patches, axis=0)).to(device_t)
+            probs_batch = _predict_proba_tta(model, x, tta=tta).cpu().numpy()  # (B, n_classes, ps, ps)
+
+            for (r, c), (ph, pw), probs in zip(chunk, shapes, probs_batch):
                 prob_acc[:, r : r + ph, c : c + pw] += probs[:, :ph, :pw]
                 count[r : r + ph, c : c + pw] += 1.0
 
@@ -164,11 +182,12 @@ def infer_tiles_folder(
     n_channels_image: int = 6,
     n_classes: int = N_CLASSES,
     tta: bool = False,
+    batch_size: int = 16,
 ) -> list[Path]:
     """Inferensi semua ubin di folder.
 
     Output file: ``{out_dir}/{prefix}{nama_ubin}.tif``.
-    Forward ``stride``, ``tta`` ke ``infer_tile``.
+    Forward ``stride``, ``tta``, ``batch_size`` ke ``infer_tile``.
     """
     tile_dir_p = Path(tile_dir)
     out_dir_p = Path(out_dir)
@@ -191,6 +210,7 @@ def infer_tiles_folder(
             n_channels_image=n_channels_image,
             n_classes=n_classes,
             tta=tta,
+            batch_size=batch_size,
         )
         outputs.append(out_path)
     _logger.info(

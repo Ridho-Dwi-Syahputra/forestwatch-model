@@ -147,6 +147,27 @@ def test_infer_tile_tile_smaller_than_patch(tmp_path):
         assert src.read(1).shape == (20, 20)
 
 
+def test_infer_tile_batching_matches_unbatched(tmp_path):
+    """batch_size>1 (window di-stack jadi 1 forward-pass) harus identik dgn batch_size=1."""
+    torch.manual_seed(0)
+    tile = tmp_path / "tile.tif"
+    _write_dummy_tile(tile, h=48, w=48)
+
+    # Model peka piksel (bukan bias-only) supaya hasil bisa beda kalau ada window tertukar.
+    model = torch.nn.Sequential(torch.nn.Conv2d(6, 6, 3, padding=1))
+    torch.nn.init.normal_(model[0].weight, mean=0.0, std=0.5)
+
+    out_b1 = tmp_path / "mask_b1.tif"
+    out_b4 = tmp_path / "mask_b4.tif"
+    infer_tile(tile, out_b1, model, device="cpu", patch_size=16, stride=8,
+               n_channels_image=6, batch_size=1)
+    infer_tile(tile, out_b4, model, device="cpu", patch_size=16, stride=8,
+               n_channels_image=6, batch_size=4)
+
+    with rasterio.open(out_b1) as s1, rasterio.open(out_b4) as s4:
+        assert np.array_equal(s1.read(1), s4.read(1))
+
+
 # ============================================================================
 # LR warmup scheduler
 # ============================================================================
