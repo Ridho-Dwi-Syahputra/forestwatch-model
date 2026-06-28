@@ -39,9 +39,7 @@ p {
 
 .app-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(44, 166, 164, 0.14), transparent 28rem),
-    linear-gradient(135deg, #f7fbf8 0%, #edf5f0 58%, #f8faf4 100%);
+  background: #eef1ef;
 }
 
 .app-frame {
@@ -57,9 +55,9 @@ p {
   flex-direction: column;
   height: 100vh;
   padding: 16px 12px;
-  border-right: 1px solid rgba(18, 61, 47, 0.12);
-  background: #092f24;
-  color: #ffffff;
+  border-right: 1px solid rgba(18, 61, 47, 0.1);
+  background: #ffffff;
+  color: #2a3b33;
 }
 
 .sidebar-brand,
@@ -94,8 +92,7 @@ p {
   flex: 0 0 auto;
   border-radius: 8px;
   color: #ffffff;
-  background: linear-gradient(135deg, #0b3d0b, #2ca6a4);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  background: #2f6b57;
 }
 
 .sidebar-brand-text {
@@ -114,7 +111,7 @@ p {
 
 .sidebar-brand-text small {
   margin-top: 4px;
-  color: rgba(255, 255, 255, 0.62);
+  color: #6b7d74;
 }
 
 .sidebar-nav {
@@ -132,20 +129,20 @@ p {
   border-radius: 8px;
   padding: 0 12px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.72);
+  color: #4a5a52;
   text-align: left;
 }
 
 .sidebar-nav button:hover,
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: #eef3f0;
+  color: #17251f;
 }
 
 .sidebar-nav button.active {
-  background: #ffffff;
+  background: #e8f1ec;
   color: #123d2f;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+  font-weight: 700;
 }
 
 .sidebar-footer {
@@ -157,13 +154,13 @@ p {
 .sidebar .data-pill {
   justify-content: flex-start;
   min-height: 38px;
-  border-color: rgba(234, 179, 8, 0.22);
-  background: rgba(234, 179, 8, 0.12);
-  color: #ffe08a;
+  border-color: rgba(18, 61, 47, 0.14);
+  background: #f4f7f5;
+  color: #4a5a52;
 }
 
 .sidebar-toggle {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(18, 61, 47, 0.14);
 }
 
 .sidebar-collapsed {
@@ -271,10 +268,10 @@ p {
 .method-card,
 .method-hero,
 .error-panel {
-  border: 1px solid rgba(18, 61, 47, 0.14);
+  border: 1px solid rgba(18, 61, 47, 0.12);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 38px rgba(18, 61, 47, 0.1);
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .hero-band {
@@ -322,8 +319,7 @@ p {
 .primary-button {
   border: 0;
   color: #ffffff;
-  background: linear-gradient(135deg, #0b3d0b, #2ca6a4);
-  box-shadow: 0 14px 28px rgba(11, 61, 11, 0.2);
+  background: #2f6b57;
 }
 
 .secondary-button {
@@ -346,7 +342,7 @@ p {
 
 .primary-button:disabled {
   cursor: wait;
-  background: linear-gradient(135deg, #789386, #9fb7ad);
+  background: #aab8b1;
   box-shadow: none;
 }
 
@@ -370,9 +366,7 @@ p {
   border-radius: 8px;
   padding: 18px;
   color: #ffffff;
-  background:
-    linear-gradient(135deg, rgba(11, 61, 11, 0.93), rgba(18, 61, 47, 0.75)),
-    url("/landcover_2025.png") center / cover;
+  background: #2f6b57;
 }
 
 .hero-summary span,
@@ -426,7 +420,6 @@ p {
   border-radius: 8px;
   color: #ffffff;
   background: color-mix(in srgb, var(--accent) 88%, #ffffff);
-  box-shadow: 0 12px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .kpi-card p {
@@ -611,10 +604,10 @@ p {
   position: relative;
   overflow: hidden;
   min-height: 0;
-  border: 1px solid rgba(18, 61, 47, 0.14);
+  border: 1px solid rgba(18, 61, 47, 0.12);
   border-radius: 8px;
-  background: #d9e9db;
-  box-shadow: 0 20px 50px rgba(18, 61, 47, 0.13);
+  background: #e8ebe9;
+  box-shadow: none;
 }
 
 .leaflet-map {
@@ -629,15 +622,13 @@ p {
 }
 
 .summary-panel {
-  color: #ffffff;
-  border: 0;
-  background:
-    linear-gradient(135deg, rgba(11, 61, 11, 0.96), rgba(18, 61, 47, 0.94)),
-    linear-gradient(45deg, #2ca6a4, #f2c14e);
+  color: #17251f;
+  border: 1px solid rgba(18, 61, 47, 0.12);
+  background: #ffffff;
 }
 
 .summary-panel .eyebrow {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(18, 61, 47, 0.62);
 }
 
 .summary-panel > strong {
@@ -658,13 +649,13 @@ p {
   min-height: 64px;
   border-radius: 8px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.78);
+  background: #f4f7f5;
+  color: #53645b;
 }
 
 .summary-grid b {
   display: block;
-  color: #ffffff;
+  color: #123d2f;
   font-size: 1.1rem;
   margin-bottom: 2px;
 }
@@ -711,9 +702,8 @@ p {
 }
 
 .segmented button.active {
-  background: #123d2f;
+  background: #2f6b57;
   color: #ffffff;
-  box-shadow: 0 10px 20px rgba(18, 61, 47, 0.2);
 }
 
 .year-slider {
@@ -779,7 +769,7 @@ p {
 }
 
 input[type="range"] {
-  accent-color: #2ca6a4;
+  accent-color: #2f6b57;
 }
 
 .select-row select,
@@ -1120,10 +1110,10 @@ input[type="range"] {
   border: 1px solid rgba(18, 61, 47, 0.14);
   border-radius: 8px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 18px 38px rgba(18, 61, 47, 0.1);
+  box-shadow: none;
 }
 
 .download-card:hover {
@@ -1220,7 +1210,7 @@ input[type="range"] {
   height: 48px;
   border-radius: 50%;
   border: 5px solid #dbe9df;
-  border-top-color: #2ca6a4;
+  border-top-color: #2f6b57;
   animation: spin 0.8s linear infinite;
 }
 

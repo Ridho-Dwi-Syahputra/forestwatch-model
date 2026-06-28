@@ -19,8 +19,8 @@ export function AppProvider({ children }) {
   const [activeView, setActiveView] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeYear, setActiveYear] = useState(2025);
-  const [opacity, setOpacity] = useState(0.72);
-  const [basemap, setBasemap] = useState("terang");
+  const [opacity, setOpacity] = useState(0); // 0 = overlay tutupan lahan OFF (default: peta satelit + titik)
+  const [basemap, setBasemap] = useState("satelit");
   const [selectedProvince, setSelectedProvince] = useState("Semua Provinsi");
   const [selectedTransitions, setSelectedTransitions] = useState(
     () => new Set(Object.keys(TRANSITION_META))

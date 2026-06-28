@@ -34,7 +34,7 @@ export default function DownloadsPage() {
     },
     {
       title: "Metrics JSON",
-      description: "Overall accuracy, mIoU, Kappa, IoU/F1, dan confusion matrix.",
+      description: "Overall accuracy, Kappa, F1 per kelas, dan confusion matrix.",
       href: API_URL ? `${API_URL}/api/download/metrics` : localPath("metrics.json"),
       icon: Target,
     },

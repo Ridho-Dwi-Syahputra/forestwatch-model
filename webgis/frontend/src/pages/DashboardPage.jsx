@@ -79,9 +79,9 @@ export default function DashboardPage() {
         />
         <KpiCard
           icon={Database}
-          label="Mean IoU model"
-          value={formatNumber(modelMetrics.mean_iou, 2)}
-          note={`OA ${formatPercent(modelMetrics.overall_accuracy)}`}
+          label="Akurasi model"
+          value={formatPercent(modelMetrics.overall_accuracy)}
+          note={`Kappa ${formatNumber(modelMetrics.kappa, 3)}`}
           accent={KPI_ACCENTS.gold}
         />
       </div>

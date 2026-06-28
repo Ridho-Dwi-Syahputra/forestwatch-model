@@ -1,4 +1,4 @@
-// Halaman 4 -- Akurasi Model: confusion matrix heatmap, IoU/F1 per kelas, KPI OA/mIoU/Kappa.
+// Halaman 4 -- Akurasi Model: confusion matrix heatmap, F1 per kelas, KPI OA/Kappa/F1.
 import { Activity, BarChart3, Database, Sparkles, Target } from "lucide-react";
 
 import KpiCard from "../components/KpiCard";
@@ -34,6 +34,9 @@ export default function AccuracyPage() {
   const matrix = metrics.confusion_matrix || [];
   const labels = rows.map((row) => row.class);
   const maxCell = Math.max(...matrix.flat().map((value) => Number(value || 0)), 1);
+  const f1Macro = rows.length
+    ? rows.reduce((sum, row) => sum + (Number(row.f1) || 0), 0) / rows.length
+    : 0;
 
   return (
     <section className="page accuracy-page">
@@ -46,8 +49,8 @@ export default function AccuracyPage() {
         />
         <KpiCard
           icon={Activity}
-          label="Mean IoU"
-          value={formatPercent(metrics.mean_iou)}
+          label="F1 Makro"
+          value={formatPercent(f1Macro)}
           accent={KPI_ACCENTS.teal}
         />
         <KpiCard
@@ -92,15 +95,13 @@ export default function AccuracyPage() {
         <section className="panel-section">
           <div className="section-title">
             <BarChart3 size={18} />
-            IoU dan F1 per Kelas
+            F1 per Kelas
           </div>
           <div className="data-table metric-table">
             {rows.map((row) => (
               <div key={row.class}>
                 <span>{row.class}</span>
-                <strong>
-                  IoU {formatPercent(row.iou)} / F1 {formatPercent(row.f1)}
-                </strong>
+                <strong>F1 {formatPercent(row.f1)}</strong>
               </div>
             ))}
           </div>

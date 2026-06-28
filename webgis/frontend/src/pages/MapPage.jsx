@@ -40,7 +40,7 @@ export default function MapPage() {
           <div className="summary-grid">
             <span>
               <b>{formatNumber(filteredFeatures.length, 0)}</b>
-              Polygon
+              Titik
             </span>
             <span>
               <b>{activeYear}</b>
@@ -78,9 +78,11 @@ export default function MapPage() {
             ))}
           </div>
           <p className="layer-note">
-            {isEstimatedLayer
-              ? `Layer ${activeYear} memakai visual referensi sampai komposit tahunan tersedia.`
-              : `Layer ${activeYear} tersedia dari data.`}
+            {opacity === 0
+              ? "Overlay tutupan lahan mati. Geser opacity untuk menampilkannya di atas peta satelit."
+              : isEstimatedLayer
+                ? `Layer ${activeYear} memakai visual referensi sampai komposit tahunan tersedia.`
+                : `Layer tutupan lahan ${activeYear} aktif.`}
           </p>
           <label className="range-row">
             <span>Opacity</span>
