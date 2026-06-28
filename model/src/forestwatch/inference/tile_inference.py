@@ -143,7 +143,11 @@ def infer_tile(
     with rasterio.open(tif_path) as src:
         W, H = src.width, src.height
         meta = src.meta.copy()
-        meta.update(count=1, dtype="uint8", compress="lzw")
+        # nodata=None (override): mask kelas tak punya semantik "no-data" (semua piksel
+        # 0..n_classes-1 valid) -- nodata milik citra SUMBER (sering -inf utk float32, mis.
+        # komposit GEE getDownloadURL) tak valid utk dtype uint8, rasterio akan raise
+        # ValueError saat dibuka utk ditulis kalau nodata lama ikut terbawa.
+        meta.update(count=1, dtype="uint8", compress="lzw", nodata=None)
 
         if no_overlap:
             mask_full = np.zeros((H, W), dtype="uint8")

@@ -123,10 +123,10 @@ def test_infer_tile_overlap_and_tta(tmp_path):
     _write_dummy_tile(tile, h=40, w=40)
     out = tmp_path / "mask.tif"
 
-    model = _IdentityArgmaxModel()
+    model = _IdentityArgmaxModel()  # 6 kelas -- harus disamakan via n_classes (default paket: 7)
     result = infer_tile(
         tile, out, model,
-        device="cpu", patch_size=32, stride=16, n_channels_image=6, tta=True,
+        device="cpu", patch_size=32, stride=16, n_channels_image=6, n_classes=6, tta=True,
     )
     assert result.exists()
     with rasterio.open(result) as src:
@@ -159,10 +159,11 @@ def test_infer_tile_batching_matches_unbatched(tmp_path):
 
     out_b1 = tmp_path / "mask_b1.tif"
     out_b4 = tmp_path / "mask_b4.tif"
+    # n_classes=6 -- model di atas output 6 channel (default paket: 7), harus disamakan.
     infer_tile(tile, out_b1, model, device="cpu", patch_size=16, stride=8,
-               n_channels_image=6, batch_size=1)
+               n_channels_image=6, n_classes=6, batch_size=1)
     infer_tile(tile, out_b4, model, device="cpu", patch_size=16, stride=8,
-               n_channels_image=6, batch_size=4)
+               n_channels_image=6, n_classes=6, batch_size=4)
 
     with rasterio.open(out_b1) as s1, rasterio.open(out_b4) as s4:
         assert np.array_equal(s1.read(1), s4.read(1))
