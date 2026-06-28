@@ -126,6 +126,16 @@ def infer_tile(
 
     band_indices = list(range(1, n_channels_image + 1))  # rasterio 1-indexed
 
+    # Tanpa overlap (stride >= patch_size), hampir semua piksel cuma disentuh SATU window --
+    # tak perlu akumulator probabilitas float32 (n_classes x H x W, bisa >>1 GB utk tile
+    # besar). Tulis langsung ke mask uint8 (H x W, ~32x lebih kecil drpd prob_acc+count
+    # float32 7-kelas) -- penghematan RAM riil, bukan cuma workaround.
+    # Catatan: kalau H/W bukan kelipatan patch_size, window penyesuai-tepi (_starts) bisa
+    # sedikit overlap di strip kanan/bawah (maks patch_size-1 px) -- di situ window terakhir
+    # "menang" (overwrite), BUKAN di-blend. Tetap prediksi valid, cuma beda dr blending halus
+    # yg dipakai saat overlap aktif (stride < patch_size).
+    no_overlap = stride >= patch_size
+
     # Tile sumber bisa >GB-an (6 band float32) -- JANGAN load seluruh tile ke RAM sekaligus
     # (risiko OOM di Colab free, ~12 GB RAM). Tiap window dibaca langsung dari file via
     # rasterio Window saat dibutuhkan -- hasil pikselnya identik dgn slice array penuh,
@@ -135,8 +145,11 @@ def infer_tile(
         meta = src.meta.copy()
         meta.update(count=1, dtype="uint8", compress="lzw")
 
-        prob_acc = np.zeros((n_classes, H, W), dtype="float32")
-        count = np.zeros((H, W), dtype="float32")
+        if no_overlap:
+            mask_full = np.zeros((H, W), dtype="uint8")
+        else:
+            prob_acc = np.zeros((n_classes, H, W), dtype="float32")
+            count = np.zeros((H, W), dtype="float32")
 
         windows = [(r, c) for r in _starts(H) for c in _starts(W)]
 
@@ -161,12 +174,18 @@ def infer_tile(
                 x = torch.from_numpy(np.stack(patches, axis=0)).to(device_t)
                 probs_batch = _predict_proba_tta(model, x, tta=tta).cpu().numpy()  # (B, n_classes, ps, ps)
 
-                for (r, c), (ph, pw), probs in zip(chunk, shapes, probs_batch):
-                    prob_acc[:, r : r + ph, c : c + pw] += probs[:, :ph, :pw]
-                    count[r : r + ph, c : c + pw] += 1.0
+                if no_overlap:
+                    preds_batch = probs_batch.argmax(axis=1).astype("uint8")  # (B, ps, ps)
+                    for (r, c), (ph, pw), pred in zip(chunk, shapes, preds_batch):
+                        mask_full[r : r + ph, c : c + pw] = pred[:ph, :pw]
+                else:
+                    for (r, c), (ph, pw), probs in zip(chunk, shapes, probs_batch):
+                        prob_acc[:, r : r + ph, c : c + pw] += probs[:, :ph, :pw]
+                        count[r : r + ph, c : c + pw] += 1.0
 
-    count = np.maximum(count, 1e-6)
-    mask_full = (prob_acc / count).argmax(axis=0).astype("uint8")
+    if not no_overlap:
+        count = np.maximum(count, 1e-6)
+        mask_full = (prob_acc / count).argmax(axis=0).astype("uint8")
 
     with rasterio.open(out, "w", **meta) as dst:
         dst.write(mask_full, 1)
