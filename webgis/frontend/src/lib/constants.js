@@ -127,6 +127,8 @@ export const YEAR_TREND = [
 export const PAPUA = {
   center: [-4.5, 138],
   zoom: 6,
+  minZoom: 5, // batas zoom-out: tetap fokus Papua (tak bisa keluar ke benua lain)
+  maxZoom: 15, // batas zoom-in: lihat detail wilayah dari citra satelit
   bounds: [
     [-9.8, 129.5],
     [0.8, 141.5],

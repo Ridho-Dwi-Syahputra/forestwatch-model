@@ -1,5 +1,7 @@
-// Peta Leaflet -- TERKUNCI ke Papua. Gaya ala SiPongi: basemap satelit, deforestasi sbg
-// TITIK (bukan overlay hijau penuh). Overlay tutupan lahan opsional (muncul saat opacity > 0).
+// Peta Leaflet -- DIBATASI ke Papua (zoom & pan boleh, tapi tak bisa keluar bounds / zoom-out
+// melewati overview). Zoom-in menampilkan detail wilayah dari citra satelit. Gaya ala SiPongi:
+// basemap satelit, deforestasi sbg TITIK (bukan overlay hijau penuh). Overlay tutupan lahan
+// opsional (muncul saat opacity > 0).
 import {
   CircleMarker,
   ImageOverlay,
@@ -52,17 +54,12 @@ export default function MapView() {
       <MapContainer
         center={PAPUA.center}
         zoom={PAPUA.zoom}
-        minZoom={PAPUA.zoom}
-        maxZoom={PAPUA.zoom}
+        minZoom={PAPUA.minZoom}
+        maxZoom={PAPUA.maxZoom}
         maxBounds={PAPUA.bounds}
         maxBoundsViscosity={1.0}
-        dragging={false}
-        scrollWheelZoom={false}
-        doubleClickZoom={false}
-        touchZoom={false}
-        boxZoom={false}
-        keyboard={false}
-        zoomControl={false}
+        scrollWheelZoom
+        zoomControl
         className="leaflet-map"
       >
         <TileLayer key={basemap} attribution={basemapConfig.attribution} url={basemapConfig.url} />
