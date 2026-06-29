@@ -36,8 +36,9 @@ def mask_scl(image: "ee.Image", mask_classes: list[int] | None = None) -> "ee.Im
     return image.updateMask(keep)
 
 
-def s2_composite(
-    year: int,
+def s2_composite_range(
+    start: str,
+    end: str,
     region: "ee.Geometry",
     *,
     bands: tuple[str, ...] = BANDS,
@@ -45,12 +46,15 @@ def s2_composite(
     scl_mask_classes: list[int] | None = None,
     reflectance_divisor: int = REFLECTANCE_DIVISOR,
 ) -> "ee.Image":
-    """Komposit median Sentinel-2 bebas awan untuk satu tahun.
+    """Komposit median Sentinel-2 bebas awan untuk rentang tanggal custom.
 
-    Sumber: PRD §A.5 Cell 3 ``s2_composite(year)`` — diparameterisasi region & band.
+    Logika inti dipakai bersama oleh ``s2_composite(year, ...)`` (rentang 1 Jan - 31 Des)
+    dan untuk komposit "isi celah" -- mis. tahun yang datanya belum penuh (lihat
+    ``fill_composite_gaps``), di mana butuh komposit dari periode LAIN (bukan tahun kalender
+    penuh) sebagai fallback.
 
     Args:
-        year: Tahun (e.g. 2021).
+        start, end: Tanggal ISO ``"YYYY-MM-DD"`` (dipakai langsung di ``ee.Filter.date``).
         region: ``ee.Geometry`` area of interest.
         bands: Band yang akan dipilih (default: 6 band PRD §A.2.1).
         cloud_threshold: Filter scene dengan CLOUDY_PIXEL_PERCENTAGE > nilai ini.
@@ -58,12 +62,10 @@ def s2_composite(
         reflectance_divisor: Pembagi reflektansi ke skala [0, 1].
 
     Returns:
-        ``ee.Image`` 6 band float, reflektansi [0, 1], clipped ke region.
+        ``ee.Image`` 6 band float, reflektansi [0, 1], clipped ke region. Piksel yang TAK
+        punya observasi valid sama sekali di rentang ini akan masked (no-data) -- bukan 0.
     """
     import ee  # noqa: PLC0415
-
-    start = f"{year}-01-01"
-    end = f"{year}-12-31"
 
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
@@ -81,6 +83,56 @@ def s2_composite(
         .toFloat()
     )
     return composite
+
+
+def s2_composite(
+    year: int,
+    region: "ee.Geometry",
+    *,
+    bands: tuple[str, ...] = BANDS,
+    cloud_threshold: float = 40.0,
+    scl_mask_classes: list[int] | None = None,
+    reflectance_divisor: int = REFLECTANCE_DIVISOR,
+) -> "ee.Image":
+    """Komposit median Sentinel-2 bebas awan untuk satu tahun (1 Jan - 31 Des).
+
+    Sumber: PRD §A.5 Cell 3 ``s2_composite(year)`` — diparameterisasi region & band.
+    Wrapper tipis di atas ``s2_composite_range`` dgn rentang tahun kalender penuh.
+
+    Args:
+        year: Tahun (e.g. 2021).
+        region: ``ee.Geometry`` area of interest.
+        bands: Band yang akan dipilih (default: 6 band PRD §A.2.1).
+        cloud_threshold: Filter scene dengan CLOUDY_PIXEL_PERCENTAGE > nilai ini.
+        scl_mask_classes: SCL class id yang di-mask (default: lihat ``mask_scl``).
+        reflectance_divisor: Pembagi reflektansi ke skala [0, 1].
+
+    Returns:
+        ``ee.Image`` 6 band float, reflektansi [0, 1], clipped ke region.
+    """
+    return s2_composite_range(
+        f"{year}-01-01",
+        f"{year}-12-31",
+        region,
+        bands=bands,
+        cloud_threshold=cloud_threshold,
+        scl_mask_classes=scl_mask_classes,
+        reflectance_divisor=reflectance_divisor,
+    )
+
+
+def fill_composite_gaps(primary: "ee.Image", fallback: "ee.Image") -> "ee.Image":
+    """Isi piksel kosong (tak ada observasi valid) di ``primary`` pakai nilai dari ``fallback``.
+
+    Dipakai utk tahun yang datanya belum penuh (mis. tahun berjalan baru terisi separuh) --
+    piksel yang ``median()``-nya kosong krn semua observasi di rentang ``primary`` ke-mask
+    awan/tak ada data sama sekali, diisi dari komposit periode lain (mis. semester
+    sebelumnya) drpd dibiarkan no-data total di hasil akhir.
+
+    ``ee.Image.unmask`` bekerja per-piksel-per-band: piksel ``primary`` yang valid TETAP
+    dipakai (fallback tak menimpa apa pun yang sudah ada) -- ini cuma isi celah, bukan blend.
+    """
+    return primary.unmask(fallback)
 
 
 def compute_dnbr(
