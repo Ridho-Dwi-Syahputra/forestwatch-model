@@ -6,6 +6,14 @@ geopandas>=0.14
 shapely>=2.0
 python-dotenv>=1.0
 
+# --- Database (dashboard data + log/hasil "Analisis Wilayah Custom") ---
+# sqlalchemy: ORM. pymysql: driver MySQL pure-Python (tak perlu compiler C di Windows, beda
+# dgn mysqlclient). cryptography: dibutuhkan PyMySQL utk auth plugin caching_sha2_password
+# (default MySQL 8+) -- tanpa ini, koneksi gagal walau kredensial benar.
+sqlalchemy>=2.0
+pymysql>=1.1
+cryptography>=41
+
 # --- Fitur "Analisis Wilayah Custom" (POST /api/analyze) ---
 # earthengine-api: auth Service Account + tarik komposit Sentinel-2 dari GEE
 # rasterio: baca/tulis GeoTIFF (komposit citra + mask hasil inferensi)

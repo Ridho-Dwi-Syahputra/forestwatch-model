@@ -13,11 +13,13 @@ import base64
 import io
 import math
 import shutil
+import time
 import uuid
 from pathlib import Path
 
 import requests
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.core import gee_client, model_singleton
 from app.core.config import ANALYZE_MAX_SIDE_KM, ANALYZE_SCALE_M, ANALYZE_TMP_DIR
@@ -30,6 +32,8 @@ from app.core.forestwatch_bridge import (
     s2_composite,
     summarize_geojson_transitions,
 )
+from app.db.analyze_persistence import log_analyze_request, save_analyze_result
+from app.db.session import get_db
 from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 
 router = APIRouter()
@@ -65,7 +69,28 @@ def _download_ee_geotiff(image, region, scale: int, out_path: Path) -> None:
 
 
 @router.post("/analyze", response_model=AnalyzeResponse, tags=["Analyze"])
-def analyze(req: AnalyzeRequest):
+def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
+    start = time.monotonic()
+    try:
+        response = _run_analysis(req)
+    except HTTPException as exc:
+        log_analyze_request(
+            db, req, status="error", http_status_code=exc.status_code,
+            error_message=str(exc.detail), duration_ms=int((time.monotonic() - start) * 1000),
+        )
+        raise
+    except Exception as exc:  # noqa: BLE001 -- tetap 500 default FastAPI, cuma dicatat dulu
+        log_analyze_request(
+            db, req, status="error", http_status_code=500,
+            error_message=str(exc), duration_ms=int((time.monotonic() - start) * 1000),
+        )
+        raise
+
+    save_analyze_result(db, req, response, duration_ms=int((time.monotonic() - start) * 1000))
+    return response
+
+
+def _run_analysis(req: AnalyzeRequest) -> AnalyzeResponse:
     if not FORESTWATCH_AVAILABLE:
         raise HTTPException(
             status_code=503,

@@ -1,54 +1,64 @@
-"""Endpoint download file data."""
+"""Endpoint download file data -- dibangun dari DB (reuse helper serialisasi router lain,
+jangan re-query+rebuild independen)."""
 
-import json
+from __future__ import annotations
+
 import csv
 import io
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
-from app.core.config import DATA_DIR, FILES
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.routers.deforestation import feature_to_dict, query_deforestation_features
+from app.routers.legend import serialize_legend
+from app.routers.statistics import load_stats
 
 router = APIRouter()
 
-DOWNLOADABLE = {
-    "geojson": FILES["deforestation"],
-    "legend":  FILES["legend"],
-    "metrics": FILES["metrics"],
-}
+VALID_DOWNLOAD_FILES = {"geojson", "legend", "metrics"}
 
 
 @router.get("/download/{file_type}")
-def download_file(file_type: str):
-    if file_type not in DOWNLOADABLE:
+def download_file(file_type: str, db: Session = Depends(get_db)):
+    if file_type not in VALID_DOWNLOAD_FILES:
         raise HTTPException(
             status_code=400,
-            detail=f"file_type tidak valid. Pilihan: {list(DOWNLOADABLE.keys())}"
+            detail=f"file_type tidak valid. Pilihan: {sorted(VALID_DOWNLOAD_FILES)}",
         )
 
-    path = DATA_DIR / DOWNLOADABLE[file_type]
-    if not path.exists():
-        raise HTTPException(status_code=404, detail=f"{DOWNLOADABLE[file_type]} tidak ditemukan")
+    if file_type == "legend":
+        payload = serialize_legend(db)
+    elif file_type == "metrics":
+        # Konsolidasi: metrics.json lama cuma duplikat statistics.model_metrics -- derive dari
+        # situ (bare dict, BUKAN dibungkus {"model_metrics": {...}}, sesuai bentuk file asli).
+        payload = load_stats(db)["model_metrics"]
+    else:  # "geojson"
+        rows = query_deforestation_features(db)
+        payload = {
+            "type": "FeatureCollection",
+            "features": [feature_to_dict(r) for r in rows],
+            "total": len(rows),
+        }
 
-    return FileResponse(
-        path=str(path),
-        filename=path.name,
+    return Response(
+        content=json.dumps(payload).encode("utf-8"),
         media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={file_type}.json"},
     )
 
 
 @router.get("/download/deforestation/csv")
-def download_deforestation_csv():
-    """Konversi deforestation.geojson → CSV untuk unduhan."""
-    path = DATA_DIR / FILES["deforestation"]
-    if not path.exists():
-        raise HTTPException(status_code=404, detail="deforestation.geojson tidak ditemukan")
-
-    fc = json.loads(path.read_text(encoding="utf-8"))
-    features = fc.get("features", [])
-
-    if not features:
+def download_deforestation_csv(db: Session = Depends(get_db)):
+    """Konversi data deforestasi -> CSV untuk unduhan."""
+    rows = query_deforestation_features(db)
+    if not rows:
         raise HTTPException(status_code=404, detail="Tidak ada data deforestasi")
 
-    # Kumpulkan semua property keys
+    features = [feature_to_dict(r) for r in rows]
+
     all_keys = set()
     for f in features:
         all_keys.update(f.get("properties", {}).keys())

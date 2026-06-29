@@ -12,12 +12,19 @@ load_dotenv()
 # Root project backend
 BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent
 
-# Folder data (7 file kontrak dari Orang 1)
+# Folder data (7 file kontrak dari Orang 1) -- sumber sync ke database, lihat app/db/sync_static.py
 DATA_DIR: Path = Path(os.getenv("DATA_DIR", str(BACKEND_ROOT / "data"))).resolve()
 
-# Folder static (untuk serve PNG via /static)
-STATIC_DIR: Path = BACKEND_ROOT / "static"
-STATIC_DIR.mkdir(exist_ok=True)
+# === Database (MySQL) -- dashboard data + log/hasil "Analisis Wilayah Custom" ===
+# Default ala XAMPP/Laragon lokal (root, tanpa password) -- sesuaikan di .env ke kredensial nyata.
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "forestwatch_papua")
+DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+# URL server TANPA nama DB -- dipakai init_db() utk CREATE DATABASE IF NOT EXISTS sekali di awal.
+DATABASE_SERVER_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/?charset=utf8mb4"
 
 # CORS origins — pisahkan dengan koma di .env
 _cors_raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
@@ -32,13 +39,9 @@ FILES = {
     "deforestation":       "deforestation.geojson",
     "statistics":          "statistics.json",
     "legend":              "legend.json",
-    "metrics":             "metrics.json",
-    "model_onnx":          "model.onnx",
-    "model_card":          "model_card.md",
 }
 
 VALID_YEARS = {2021, 2025}
-VALID_DOWNLOAD_FILES = {"geojson", "metrics", "legend"}
 
 # === Konfigurasi fitur "Analisis Wilayah Custom" (POST /api/analyze) ===
 # Auth GEE pakai Service Account (server, tanpa interaksi manusia) -- BUKAN ee.Authenticate().
