@@ -92,10 +92,19 @@ def mosaic_masks_to_png(
     out_bounds_json: str | os.PathLike[str],
     *,
     palette: dict[int, tuple[int, int, int]] | None = None,
+    max_dim_px: int = 4096,
 ) -> tuple[Path, Path]:
     """Merge banyak ubin mask GeoTIFF → PNG mosaic + bounds JSON.
 
     Sumber: PRD §A.5 Cell 10 ``rasterio.merge.merge``.
+
+    ``max_dim_px``: batas dimensi terbesar mosaic. Tanpa ini, ``merge()`` merekonstruksi
+    SELURUH bounding box gabungan tile pada resolusi native (10 m) jadi SATU array di
+    memori -- utk cakupan se-provinsi Papua (144 tile, native 10 m) ini bisa puluhan GB dan
+    crash OOM Colab (TERKONFIRMASI NYATA, bukan tebakan). PNG ini cuma dipakai sbg overlay
+    web (Leaflet `L.imageOverlay`), jadi resolusi native tak dibutuhkan -- di-downsample ke
+    ``res`` yg lebih kasar via ``merge(..., res=...)` (default resampling NEAREST, aman utk
+    mask kelas kategorikal -- tak ada blending antar kelas).
 
     Returns:
         ``(png_path, bounds_path)``.
@@ -110,9 +119,24 @@ def mosaic_masks_to_png(
         raise ValueError("mask_files kosong.")
     srcs = [rasterio.open(f) for f in mask_files]
     try:
-        mosaic, transform = merge(srcs)
+        native_xres, native_yres = srcs[0].res
+        left = min(s.bounds.left for s in srcs)
+        bottom = min(s.bounds.bottom for s in srcs)
+        right = max(s.bounds.right for s in srcs)
+        top = max(s.bounds.top for s in srcs)
+        full_w_px = (right - left) / native_xres
+        full_h_px = (top - bottom) / native_yres
+        scale = max(1.0, max(full_w_px, full_h_px) / max_dim_px)
+        target_res = (native_xres * scale, native_yres * scale) if scale > 1.0 else None
+
+        mosaic, transform = merge(srcs, res=target_res)
         mask = mosaic[0]  # (H, W) uint8
         H, W = mask.shape
+        if scale > 1.0:
+            _logger.info(
+                "Mosaic %d tile di-downsample %.1fx (%dx%d native -> %dx%d) -- batas max_dim_px=%d.",
+                len(srcs), scale, round(full_w_px), round(full_h_px), W, H, max_dim_px,
+            )
     finally:
         for s in srcs:
             s.close()
