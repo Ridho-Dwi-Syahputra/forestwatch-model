@@ -99,6 +99,33 @@ def detect_transitions_from_arrays(
     return features
 
 
+def _tile_index(filename_after_prefix: str) -> str:
+    """``'00-0000000000-0000000000.tif'`` -> ``'00'``; ``'05.tif'`` -> ``'05'``.
+
+    GEE men-shard 1 tile jadi BEBERAPA GeoTIFF kalau ukurannya melewati limit
+    ``Export.image.toDrive`` (suffix ``-{x_offset}-{y_offset}`` ditambah otomatis oleh GEE,
+    bukan dari kode kita) -- shard ini diidentifikasi lewat angka tile di depan nama file.
+    """
+    return filename_after_prefix.split("-")[0].split(".")[0]
+
+
+def _group_shards_by_tile(files: list[Path], prefix: str) -> dict[str, list[Path]]:
+    groups: dict[str, list[Path]] = {}
+    for f in files:
+        idx = _tile_index(f.name.replace(prefix, "", 1))
+        groups.setdefault(idx, []).append(f)
+    return groups
+
+
+def _union_bounds(bounds_list: list["object"]) -> tuple[float, float, float, float]:
+    return (
+        min(b.left for b in bounds_list),
+        min(b.bottom for b in bounds_list),
+        max(b.right for b in bounds_list),
+        max(b.top for b in bounds_list),
+    )
+
+
 def detect_transitions(
     t1_dir: str | os.PathLike[str],
     t2_dir: str | os.PathLike[str],
@@ -112,45 +139,64 @@ def detect_transitions(
     period_from: int = 2021,
     period_to: int = 2025,
 ) -> dict[str, Any]:
-    """Iterasi semua ubin T1 ↔ T2, hasilkan GeoJSON deteksi perubahan.
+    """Iterasi semua tile T1 ↔ T2, hasilkan GeoJSON deteksi perubahan.
 
-    Konvensi nama: file ``{t1_dir}/{t1_prefix}{X}.tif`` harus berpasangan dengan
-    ``{t2_dir}/{t2_prefix}{X}.tif`` (substring ``{X}`` sama).
+    Konvensi nama: file ``{t1_dir}/{t1_prefix}{X}.tif`` berpasangan dengan
+    ``{t2_dir}/{t2_prefix}{X}.tif`` lewat nomor tile di depan ``{X}`` (lihat
+    ``_tile_index``) -- BUKAN ``{X}`` penuh, karena GEE bisa men-shard 1 tile logis jadi
+    beberapa file dengan batas piksel yang BISA BEDA antar export job (mis. job dengan band
+    lebih banyak di-shard lebih kecil). Tiap tile logis di-mosaic dulu (shard T1 & shard T2
+    SENDIRI-SENDIRI, dipaksa ``bounds``+``res`` yang SAMA) sebelum dibandingkan -- supaya
+    array yang di-diff PASTI selaras piksel, bukan asumsi shape sama
+    (lihat riwayat bug nyata: ``ValueError: operands could not be broadcast ... (13568,13568)
+    (12544,12544)`` saat T1=2021 [6 band, shard 13568px] dipasangkan langsung dgn T2=2025
+    [6+label band, shard 12544px]).
 
     Returns:
         FeatureCollection dict yang juga disimpan ke ``out_geojson``.
     """
     try:
         import rasterio  # noqa: PLC0415
+        from rasterio.merge import merge  # noqa: PLC0415
     except ImportError as e:
         raise ImportError("Butuh rasterio. Install: pip install -e \".[gis]\"") from e
 
     t1_dir_p = Path(t1_dir)
     t2_dir_p = Path(t2_dir)
     t1_files = sorted(t1_dir_p.glob(f"{t1_prefix}*.tif"))
+    t2_files = sorted(t2_dir_p.glob(f"{t2_prefix}*.tif"))
     if not t1_files:
         raise FileNotFoundError(f"Tidak ada '{t1_prefix}*.tif' di {t1_dir_p}.")
+    if not t2_files:
+        raise FileNotFoundError(f"Tidak ada '{t2_prefix}*.tif' di {t2_dir_p}.")
+
+    t1_groups = _group_shards_by_tile(t1_files, t1_prefix)
+    t2_groups = _group_shards_by_tile(t2_files, t2_prefix)
+
+    common_tiles = sorted(set(t1_groups) & set(t2_groups))
+    missing = sorted(set(t1_groups) - set(t2_groups))
+    for idx in missing:
+        _logger.warning("Tile %s tak ada pasangan T2, di-skip.", idx)
 
     all_features: list[dict[str, Any]] = []
     transitions = transitions or TRANSITION_MAP
     counter = 0
 
-    for t1_path in tqdm(t1_files, desc="Change detection"):
-        # Konstruksi pasangan T2: ganti prefix
-        base = t1_path.name.replace(t1_prefix, "", 1)
-        t2_path = t2_dir_p / f"{t2_prefix}{base}"
-        if not t2_path.exists():
-            _logger.warning("Pasangan T2 tidak ditemukan untuk %s, di-skip.", t1_path.name)
-            continue
-
-        with rasterio.open(t1_path) as s1, rasterio.open(t2_path) as s2:
-            m1 = s1.read(1)
-            m2 = s2.read(1)
-            transform = s1.transform
+    for tile_idx in tqdm(common_tiles, desc="Change detection"):
+        srcs1 = [rasterio.open(f) for f in t1_groups[tile_idx]]
+        srcs2 = [rasterio.open(f) for f in t2_groups[tile_idx]]
+        try:
+            bounds = _union_bounds([s.bounds for s in srcs1] + [s.bounds for s in srcs2])
+            res = srcs1[0].res
+            mosaic1, transform = merge(srcs1, bounds=bounds, res=res)
+            mosaic2, _ = merge(srcs2, bounds=bounds, res=res)
+        finally:
+            for s in srcs1 + srcs2:
+                s.close()
 
         features = detect_transitions_from_arrays(
-            m1,
-            m2,
+            mosaic1[0],
+            mosaic2[0],
             transform,
             source_class=source_class,
             transitions=transitions,
